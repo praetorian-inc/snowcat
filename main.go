@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/praetorian-inc/mithril/auditors"
+	"github.com/praetorian-inc/mithril/pkg/context/static"
 	"github.com/praetorian-inc/mithril/pkg/types"
 
 	_ "github.com/praetorian-inc/mithril/auditors/auth"
@@ -16,7 +17,10 @@ func main() {
 		log.Fatalf("failed to initialize auditors: %s", err)
 	}
 
-	var ctx types.IstioContext
+	ctx, err := static.New("")
+	if err != nil {
+		log.Fatalf("failed to initialize context: %s", err)
+	}
 
 	var results []types.AuditResult
 	for _, auditor := range auditors {

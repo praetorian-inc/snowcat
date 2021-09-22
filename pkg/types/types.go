@@ -9,15 +9,14 @@ type Config struct {
 }
 
 type IstioContext interface {
-	IstioNamespace() string
-	Namespaces() []string
-	Version() string
-	PeerAuthentications() []security.PeerAuthentication
-	AuthorizationPolicies() []security.AuthorizationPolicy
-	DestinationRules() []networking.DestinationRule
-	Gateways() []networking.Gateway
-	VirtualServices() []networking.VirtualService
-	// IstioOperator() operator.IstioOperatorSpec
+	IstioNamespace() (string, error)
+	Namespaces() ([]string, error)
+	Version() (string, error)
+	PeerAuthentications() ([]security.PeerAuthentication, error)
+	AuthorizationPolicies() ([]security.AuthorizationPolicy, error)
+	DestinationRules() ([]networking.DestinationRule, error)
+	Gateways() ([]networking.Gateway, error)
+	VirtualServices() ([]networking.VirtualService, error)
 }
 
 type AuditResult struct {

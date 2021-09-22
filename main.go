@@ -1,12 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/praetorian-inc/mithril/auditors"
 	"github.com/praetorian-inc/mithril/pkg/types"
 
-	_	"github.com/praetorian-inc/mithril/auditors/auth"
+	_ "github.com/praetorian-inc/mithril/auditors/auth"
 )
 
 func main() {
@@ -26,7 +27,7 @@ func main() {
 		results = append(results, res...)
 	}
 
-	for _, res := results {
+	for _, res := range results {
 		fmt.Printf("%s: %s\n", res.Name, res.Description)
 	}
 }

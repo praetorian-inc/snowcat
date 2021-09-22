@@ -1,9 +1,8 @@
 package types
 
 import (
-	networking "istio.io/api/networking/v1beta1"
-	operator "istio.io/api/operator/v1alpha1"
-	security "istio.io/api/security/v1beta1"
+	networking "istio.io/client-go/pkg/apis/networking/v1beta1"
+	security "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
 type Config struct {
@@ -18,7 +17,7 @@ type IstioContext interface {
 	DestinationRules() []networking.DestinationRule
 	Gateways() []networking.Gateway
 	VirtualServices() []networking.VirtualService
-	IstioOperator() operator.IstioOperatorSpec
+	// IstioOperator() operator.IstioOperatorSpec
 }
 
 type AuditResult struct {

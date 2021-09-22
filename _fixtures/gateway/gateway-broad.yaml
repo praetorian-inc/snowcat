@@ -1,0 +1,22 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"networking.istio.io/v1alpha3","kind":"Gateway","metadata":{"annotations":{},"name":"httpbin-gateway","namespace":"default"},"spec":{"selector":{"istio":"ingressgateway"},"servers":[{"hosts":["*"],"port":{"name":"http","number":80,"protocol":"HTTP"}}]}}
+  creationTimestamp: "2021-09-21T16:48:07Z"
+  generation: 1
+  name: httpbin-gateway
+  namespace: default
+  resourceVersion: "42791"
+  uid: 6b11ae55-fc14-4ba4-a5a3-070e088fe373
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - hosts:
+        - '*'
+      port:
+        name: http
+        number: 80
+        protocol: HTTP

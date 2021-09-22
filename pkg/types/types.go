@@ -1,10 +1,13 @@
-package main
+package types
 
 import (
 	networking "istio.io/api/networking/v1beta1"
 	operator "istio.io/api/operator/v1alpha1"
 	security "istio.io/api/security/v1beta1"
 )
+
+type Config struct {
+}
 
 type IstioContext interface {
 	IstioNamespace() string
@@ -31,5 +34,6 @@ const (
 )
 
 type Auditor interface {
+	Name() string
 	Audit(c IstioContext) ([]AuditResult, error)
 }

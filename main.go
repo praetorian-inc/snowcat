@@ -18,7 +18,7 @@ func main() {
 		log.Fatalf("failed to initialize auditors: %s", err)
 	}
 
-	ctx, err := static.New("")
+	ctx, err := static.New("_fixtures/")
 	if err != nil {
 		log.Fatalf("failed to initialize context: %s", err)
 	}

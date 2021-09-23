@@ -6,9 +6,8 @@ import (
 	"github.com/praetorian-inc/mithril/auditors"
 	"github.com/praetorian-inc/mithril/pkg/types"
 
+	apiv1beta "istio.io/api/security/v1beta1"
 	security "istio.io/client-go/pkg/apis/security/v1beta1"
-
-	apiv1beta "pkg.go.dev/istio.io/api/security/v1beta1"
 )
 
 const (

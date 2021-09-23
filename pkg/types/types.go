@@ -1,7 +1,7 @@
 package types
 
 import (
-	networking "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security "istio.io/client-go/pkg/apis/security/v1beta1"
 	operator "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
 )

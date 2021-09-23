@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/praetorian-inc/mithril/auditors"
-	"github.com/praetorian-inc/mithril/pkg/context/static"
+	"github.com/praetorian-inc/mithril/pkg/context/xds"
 	"github.com/praetorian-inc/mithril/pkg/types"
 
 	_ "github.com/praetorian-inc/mithril/auditors/auth"
@@ -19,7 +19,11 @@ func main() {
 		log.Fatalf("failed to initialize auditors: %s", err)
 	}
 
-	ctx, err := static.New("_fixtures/")
+	// ctx, err := static.New("_fixtures/")
+	// if err != nil {
+	// 	log.Fatalf("failed to initialize context: %s", err)
+	// }
+	ctx, err := xds.New("127.0.0.1:15010")
 	if err != nil {
 		log.Fatalf("failed to initialize context: %s", err)
 	}

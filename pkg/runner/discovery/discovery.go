@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"fmt"
+	"github.com/praetorian-inc/mithril/pkg/envoy"
 
 	"github.com/praetorian-inc/mithril/pkg/runner"
 )
@@ -38,7 +39,17 @@ type EnvoyConfigStrategy struct{}
 
 func (s *EnvoyConfigStrategy) Run(map[string]string) (map[string]string, error) {
 	// curl -s 127.0.0.1:15000/server_info | jq -r .node.metadata.PROXY_CONFIG.discoveryAddress
-	return map[string]string{}, nil
+	ec, err := envoy.RetrieveConfig("http://localhost:15000/config_dump")
+	if err != nil {
+		return nil, err
+	}
+	address, err := ec.DiscoveryAddress()
+	if err != nil {
+		return nil, err
+	}
+	return map[string]string{
+		runner.DiscoveryAddressKey: address,
+	}, nil
 }
 
 func (s *EnvoyConfigStrategy) Verify(input map[string]string) error {

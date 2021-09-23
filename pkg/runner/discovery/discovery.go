@@ -8,28 +8,39 @@ import (
 
 var Runner = runner.Runner{
 	Strategies: []runner.Strategy{
-		&StaticStrategy{},
-		&DynamicStrategy{},
+		&DefaultStrategy{},
+		&EnvoyConfigStrategy{},
 	},
 }
 
-func VerifyDiscoveryAddress(addr string) error {
+func verifyDiscoveryAddress(addr string) error {
+	if addr == "" {
+		return fmt.Errorf("empty addr")
+	}
 	return nil
 }
 
-type StaticStrategy struct {
-}
+type DefaultStrategy struct{}
 
-func (s *StaticStrategy) Run(input map[string]string) (map[string]string, error) {
+func (s *DefaultStrategy) Run(input map[string]string) (map[string]string, error) {
+	// istiod.istio-system.svc.cluster.local:15010
 	addr := fmt.Sprintf("istiod.%s.svc.cluster.local:15010", input[runner.IstioNamespaceKey])
 	return map[string]string{
 		runner.DiscoveryAddressKey: addr,
-	}, VerifyDiscoveryAddress(addr)
+	}, nil
 }
 
-type DynamicStrategy struct {
+func (s *DefaultStrategy) Verify(input map[string]string) error {
+	return verifyDiscoveryAddress(input[runner.DiscoveryAddressKey])
 }
 
-func (s *DynamicStrategy) Run(map[string]string) (map[string]string, error) {
+type EnvoyConfigStrategy struct{}
+
+func (s *EnvoyConfigStrategy) Run(map[string]string) (map[string]string, error) {
+	// curl -s 127.0.0.1:15000/server_info | jq -r .node.metadata.PROXY_CONFIG.discoveryAddress
 	return map[string]string{}, nil
+}
+
+func (s *EnvoyConfigStrategy) Verify(input map[string]string) error {
+	return verifyDiscoveryAddress(input[runner.DiscoveryAddressKey])
 }

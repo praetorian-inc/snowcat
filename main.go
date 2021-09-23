@@ -9,6 +9,7 @@ import (
 	"github.com/praetorian-inc/mithril/pkg/types"
 
 	_ "github.com/praetorian-inc/mithril/auditors/auth"
+	_ "github.com/praetorian-inc/mithril/auditors/authz"
 	_ "github.com/praetorian-inc/mithril/auditors/gateway"
 )
 

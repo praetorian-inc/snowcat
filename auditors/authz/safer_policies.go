@@ -78,7 +78,7 @@ func evalAllowPolicy(policy security.AuthorizationPolicy) []apiv1beta.Rule {
 				source.NotRemoteIpBlocks != nil ||
 				source.NotRequestPrincipals != nil {
 
-				offendingRules = append(offendingRules, rule)
+				offendingRules = append(offendingRules, *rule)
 				continue // this shadows errors in the to rules, we may not want this
 			}
 		}
@@ -93,7 +93,7 @@ func evalAllowPolicy(policy security.AuthorizationPolicy) []apiv1beta.Rule {
 				operation.NotPaths != nil ||
 				operation.NotPorts != nil {
 
-				offendingRules = append(offendingRules, rule)
+				offendingRules = append(offendingRules, *rule)
 				continue
 			}
 		}
@@ -119,7 +119,7 @@ func evalDenyPolicy(policy security.AuthorizationPolicy) []apiv1beta.Rule {
 				source.RemoteIpBlocks != nil ||
 				source.RequestPrincipals != nil {
 
-				offendingRules = append(offendingRules, rule)
+				offendingRules = append(offendingRules, *rule)
 				continue // this shadows errors in the to rules, we may not want this
 			}
 		}
@@ -134,7 +134,7 @@ func evalDenyPolicy(policy security.AuthorizationPolicy) []apiv1beta.Rule {
 				operation.Paths != nil ||
 				operation.Ports != nil {
 
-				offendingRules = append(offendingRules, rule)
+				offendingRules = append(offendingRules, *rule)
 				continue
 			}
 		}

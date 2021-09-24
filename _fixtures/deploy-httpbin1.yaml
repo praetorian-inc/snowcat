@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: httpbin1
+  name: httpbin1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin1
+  template:
+    metadata:
+      labels:
+        app: httpbin1
+    spec:
+      serviceAccount: httpbin1
+      containers:
+      - image: kennethreitz/httpbin
+        name: httpbin

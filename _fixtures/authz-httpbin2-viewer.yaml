@@ -1,7 +1,7 @@
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: httpbin-viewer
+  name: httpbin2-viewer
   namespace: default
 spec:
   action: ALLOW
@@ -9,11 +9,12 @@ spec:
   - from:
     - source:
         principals:
-        - cluster.local/ns/default/sa/httpbin
+        - cluster.local/ns/default/sa/httpbin1
+        - cluster.local/ns/default/sa/httpbin2
     to:
     - operation:
         methods:
         - GET
   selector:
     matchLabels:
-      app: httpbin
+      app: httpbin2

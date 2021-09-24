@@ -1,14 +1,17 @@
 package discovery
 
 import (
+	"context"
 	"fmt"
-	"github.com/praetorian-inc/mithril/pkg/envoy"
 	"log"
 
+	"github.com/praetorian-inc/mithril/pkg/envoy"
 	"github.com/praetorian-inc/mithril/pkg/runner"
+	"github.com/praetorian-inc/mithril/pkg/xds"
 )
 
 var Runner = runner.Runner{
+	Name: "Discovery",
 	Strategies: []runner.Strategy{
 		&IstiodStrategy{},
 		&IstioPilotStrategy{},
@@ -20,19 +23,12 @@ func verifyDiscoveryAddress(addr string) error {
 	if addr == "" {
 		return fmt.Errorf("empty addr")
 	}
-	return nil
-}
-
-type DefaultStrategy struct{}
-
-func (s *DefaultStrategy) Run(input map[string]string) (map[string]string, error) {
-	log.Println("Attempting to use default discovery endpoint...")
-
-	// istiod.istio-system.svc.cluster.local:15010
-	addr := fmt.Sprintf("istiod.%s.svc.cluster.local:15010", input[runner.IstioNamespaceKey])
-	return map[string]string{
-		runner.DiscoveryAddressKey: addr,
-	}, nil
+	cli, err := xds.NewClient(addr)
+	if err != nil {
+		return err
+	}
+	_, err = cli.Version(context.Background())
+	return err
 }
 
 type IstiodStrategy struct{}

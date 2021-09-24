@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/praetorian-inc/mithril/auditors"
+	"github.com/praetorian-inc/mithril/pkg/context/static"
 	"github.com/praetorian-inc/mithril/pkg/context/xds"
 	"github.com/praetorian-inc/mithril/pkg/runner"
 	"github.com/praetorian-inc/mithril/pkg/runner/discovery"
@@ -33,23 +34,24 @@ func main() {
 
 		err := r.Run(conf)
 		if err != nil {
-			log.Fatalf("failed to run %s: %s", r.Name, err)
+			log.Printf("failed to run %s: %s", r.Name, err)
 		}
 	}
 
-	addr, ok := conf[runner.DiscoveryAddressKey]
-	if !ok {
-		log.Fatalf("unable to discover %s", runner.DiscoveryAddressKey)
-	}
-	log.Printf("discovery address: %s", addr)
+	var ctx types.IstioContext
 
-	// ctx, err := static.New("_fixtures/")
-	// if err != nil {
-	// 	log.Fatalf("failed to initialize context: %s", err)
-	// }
-	ctx, err := xds.New(addr)
-	if err != nil {
-		log.Fatalf("failed to initialize context: %s", err)
+	if addr, ok := conf[runner.DiscoveryAddressKey]; ok {
+		log.Printf("discovery address: %s", addr)
+		ctx, err = xds.New(addr)
+		if err != nil {
+			log.Fatalf("failed to initialize context: %s", err)
+		}
+	} else {
+		log.Printf("discovery address not found, using static test fixures")
+		ctx, err = static.New("_fixtures/")
+		if err != nil {
+			log.Fatalf("failed to initialize context: %s", err)
+		}
 	}
 
 	var results []types.AuditResult

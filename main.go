@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/fatih/color"
+
 	"github.com/praetorian-inc/mithril/auditors"
 	"github.com/praetorian-inc/mithril/pkg/context/static"
 	"github.com/praetorian-inc/mithril/pkg/context/xds"
@@ -65,7 +67,8 @@ func main() {
 		results = append(results, res...)
 	}
 
+	red := color.New(color.FgRed).SprintFunc()
 	for _, res := range results {
-		fmt.Printf("%s: %s\n", res.Name, res.Description)
+		fmt.Printf("%s: %s\n", red(res.Name), res.Description)
 	}
 }

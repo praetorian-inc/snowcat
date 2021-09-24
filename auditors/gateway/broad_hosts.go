@@ -30,7 +30,7 @@ func (a *Auditor) Audit(c types.IstioContext) ([]types.AuditResult, error) {
 				if host == "*" {
 					results = append(results, types.AuditResult{
 						Name:        a.Name(),
-						Description: fmt.Sprintf("%s host gateway is too broad (wildcard host allowed)", gateway),
+						Description: fmt.Sprintf("%s host gateway is too broad (wildcard host allowed)", gateway.Spec.Selector["istio"]),
 					})
 				}
 			}

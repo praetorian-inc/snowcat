@@ -13,17 +13,31 @@ type EnvoyConfig struct {
 }
 
 func (ec *EnvoyConfig) DiscoveryAddress() (string, error) {
-	// configs[(first config where @type is type.googleapis.com/envoy.admin.v3.BootstrapConfigDump)]->bootstrap->node->metadata->PROXY_CONFIG->discoveryAddress
+	// For when the discoveryAddress property exists
 	nodes, err := ec.jpathNode.JSONPath("$..discoveryAddress")
+	if err == nil && nodes != nil && len(nodes) > 0 {
+		addressStringVal := nodes[0].String()
+		addressStringVal = strings.Replace(addressStringVal, "\"", "", -1)
+		return addressStringVal, nil
+	}
+
+	// For when there is a dynamic route config to port 15010 or 15012
+	nodes, err = ec.jpathNode.JSONPath("$..name")
+	if err == nil && nodes != nil && len(nodes) > 0 {
+		for _, node := range nodes {
+			addressStringVal := node.String()
+			addressStringVal = strings.Replace(addressStringVal, "\"", "", -1)
+			if strings.HasSuffix(addressStringVal, ":15010") || strings.HasSuffix(addressStringVal, ":15012") {
+				return addressStringVal, nil
+			}
+		}
+	}
+
 	if err != nil {
 		return "", err
 	}
-	if nodes == nil || len(nodes) < 1 {
-		return "", fmt.Errorf("no discoveryAddress in Envoy config")
-	}
-	addressStringVal := nodes[0].String()
-	addressStringVal = strings.Replace(addressStringVal, "\"", "", -1)
-	return addressStringVal, nil
+
+	return "", fmt.Errorf("Could not find discovery address in Envoy config")
 }
 
 func LoadConfig(configBytes []byte) (*EnvoyConfig, error) {

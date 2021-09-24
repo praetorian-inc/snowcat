@@ -1,0 +1,10 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-with-positive
+spec:
+  action: DENY
+  rules:
+  - to:
+    - operation:
+        paths: ["/private"]

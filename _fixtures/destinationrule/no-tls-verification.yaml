@@ -1,0 +1,10 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: example-com-tls
+spec:
+  host: example.com
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+

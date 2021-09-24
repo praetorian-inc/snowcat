@@ -1,0 +1,10 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-with-negative
+spec:
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+        notPaths: ["/private"]

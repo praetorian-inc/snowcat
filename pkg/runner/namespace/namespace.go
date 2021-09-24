@@ -10,8 +10,8 @@ import (
 
 var Runner = runner.Runner{
 	Strategies: []runner.Strategy{
-		&DefaultStrategy{},
 		&EnvoyStrategy{},
+		&DefaultStrategy{},
 	},
 }
 

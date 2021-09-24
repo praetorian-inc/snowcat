@@ -9,6 +9,7 @@ import (
 )
 
 var Runner = runner.Runner{
+	Name: "Namespace",
 	Strategies: []runner.Strategy{
 		&EnvoyStrategy{},
 		&DefaultStrategy{},
@@ -24,6 +25,10 @@ func verifyIstioNamespace(addr string) error {
 
 type DefaultStrategy struct{}
 
+func (s *DefaultStrategy) Name() string {
+	return "default"
+}
+
 func (s *DefaultStrategy) Run(input map[string]string) (map[string]string, error) {
 	// istiod.istio-system.svc.cluster.local:15010
 	return map[string]string{
@@ -36,6 +41,10 @@ func (s *DefaultStrategy) Verify(input map[string]string) error {
 }
 
 type EnvoyStrategy struct{}
+
+func (s *EnvoyStrategy) Name() string {
+	return "envoy"
+}
 
 func (s *EnvoyStrategy) Run(input map[string]string) (map[string]string, error) {
 	// curl -s 127.0.0.1:15000/server_info | jq -r .node.metadata.PROXY_CONFIG.discoveryAddress

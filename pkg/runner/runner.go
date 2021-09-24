@@ -1,6 +1,10 @@
 package runner
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/hashicorp/go-multierror"
+)
 
 const (
 	IstioNamespaceKey   = "istioNamespace"
@@ -8,17 +12,21 @@ const (
 )
 
 type Runner struct {
+	Name       string
 	Strategies []Strategy
 }
 
 func (r *Runner) Run(input map[string]string) error {
+	var errs error
 	for _, strategy := range r.Strategies {
 		res, err := strategy.Run(input)
 		if err != nil {
+			errs = multierror.Append(errs, fmt.Errorf("%s: %w", strategy.Name(), err))
 			continue
 		}
 		err = strategy.Verify(res)
 		if err != nil {
+			errs = multierror.Append(errs, fmt.Errorf("%s validator: %w", strategy.Name(), err))
 			continue
 		}
 
@@ -27,10 +35,11 @@ func (r *Runner) Run(input map[string]string) error {
 		}
 		return nil
 	}
-	return fmt.Errorf("all strategies failed")
+	return fmt.Errorf("all strategies failed: %s", errs)
 }
 
 type Strategy interface {
+	Name() string
 	Run(map[string]string) (map[string]string, error)
 	Verify(map[string]string) error
 }

@@ -18,9 +18,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 
 	core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	discovery "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
@@ -34,6 +36,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+
+	blockinggrpc "github.com/praetorian-inc/mithril/pkg/grpc"
 )
 
 var (
@@ -103,17 +107,23 @@ func (xds *xdsClient) connect(ctx context.Context) error {
 
 	var err error
 
-	xds.conn, err = grpc.Dial(xds.discoveryAddr, xds.opts...)
+	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	defer cancel()
+
+	xds.conn, err = blockinggrpc.BlockingDial(ctx, "tcp", xds.discoveryAddr, nil, xds.opts...)
 	if err != nil {
 		return err
 	}
+	log.Printf("connection state: %s", xds.conn.GetState())
 
+	log.Printf("setting up discovery service")
 	xds.stream, err = discovery.NewAggregatedDiscoveryServiceClient(xds.conn).
 		StreamAggregatedResources(ctx)
 	if err != nil {
 		xds.Close()
 		return err
 	}
+	log.Printf("finished setting up discovery service")
 
 	return nil
 }
@@ -139,6 +149,7 @@ func (xds *xdsClient) send(ctx context.Context, req *discovery.DiscoveryRequest)
 		}
 	}
 
+	log.Printf("sending discovery request")
 	err := xds.stream.Send(req)
 	if err != nil {
 		return nil, err

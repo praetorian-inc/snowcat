@@ -6,6 +6,7 @@ require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/envoyproxy/go-control-plane v0.9.10-0.20210902042146-151bc0c70919
 	github.com/gogo/protobuf v1.3.2
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/spyzhov/ajson v0.4.2
 	google.golang.org/grpc v1.40.0
 	istio.io/api v0.0.0-20210922023733-37753c518070

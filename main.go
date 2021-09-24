@@ -29,9 +29,11 @@ func main() {
 	}
 	conf := make(map[string]string)
 	for _, r := range runners {
+		log.Printf("running %s runner", r.Name)
+
 		err := r.Run(conf)
 		if err != nil {
-			log.Fatalf("failed to run %T: %s", r, err)
+			log.Fatalf("failed to run %s: %s", r.Name, err)
 		}
 	}
 
@@ -39,6 +41,7 @@ func main() {
 	if !ok {
 		log.Fatalf("unable to discover %s", runner.DiscoveryAddressKey)
 	}
+	log.Printf("discovery address: %s", addr)
 
 	// ctx, err := static.New("_fixtures/")
 	// if err != nil {
@@ -51,6 +54,8 @@ func main() {
 
 	var results []types.AuditResult
 	for _, auditor := range auditors {
+		log.Printf("running auditor %s", auditor.Name())
+
 		res, err := auditor.Audit(ctx)
 		if err != nil {
 			log.Printf("%s failed to run: %s", auditor.Name(), err)

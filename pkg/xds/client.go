@@ -107,23 +107,20 @@ func (xds *xdsClient) connect(ctx context.Context) error {
 
 	var err error
 
-	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	connctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 	defer cancel()
 
-	xds.conn, err = blockinggrpc.BlockingDial(ctx, "tcp", xds.discoveryAddr, nil, xds.opts...)
+	xds.conn, err = blockinggrpc.BlockingDial(connctx, "tcp", xds.discoveryAddr, nil, xds.opts...)
 	if err != nil {
 		return err
 	}
-	log.Printf("connection state: %s", xds.conn.GetState())
 
-	log.Printf("setting up discovery service")
 	xds.stream, err = discovery.NewAggregatedDiscoveryServiceClient(xds.conn).
 		StreamAggregatedResources(ctx)
 	if err != nil {
 		xds.Close()
 		return err
 	}
-	log.Printf("finished setting up discovery service")
 
 	return nil
 }
@@ -149,7 +146,6 @@ func (xds *xdsClient) send(ctx context.Context, req *discovery.DiscoveryRequest)
 		}
 	}
 
-	log.Printf("sending discovery request")
 	err := xds.stream.Send(req)
 	if err != nil {
 		return nil, err

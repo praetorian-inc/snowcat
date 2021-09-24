@@ -35,6 +35,19 @@ func (s *DefaultStrategy) Run(input map[string]string) (map[string]string, error
 	}, nil
 }
 
+type IstiodStrategy struct{}
+
+func (s *IstiodStrategy) Name() string {
+	return "istiod"
+}
+
+func (s *IstiodStrategy) Run(input map[string]string) (map[string]string, error) {
+	addr := fmt.Sprintf("istiod.%s.svc.cluster.local:15010", input[runner.IstioNamespaceKey])
+	return map[string]string{
+		runner.DiscoveryAddressKey: addr,
+	}, nil
+}
+
 func (s *IstiodStrategy) Verify(input map[string]string) error {
 	return verifyDiscoveryAddress(input[runner.DiscoveryAddressKey])
 }

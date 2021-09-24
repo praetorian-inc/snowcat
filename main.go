@@ -13,6 +13,7 @@ import (
 
 	_ "github.com/praetorian-inc/mithril/auditors/auth"
 	_ "github.com/praetorian-inc/mithril/auditors/authz"
+	_ "github.com/praetorian-inc/mithril/auditors/destinationrule"
 	_ "github.com/praetorian-inc/mithril/auditors/gateway"
 )
 

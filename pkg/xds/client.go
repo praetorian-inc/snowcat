@@ -78,13 +78,15 @@ func NewClient(addr string) (DiscoveryClient, error) {
 		return nil, err
 	}
 
-	return &xdsClient{
+	cli := &xdsClient{
 		discoveryAddr: addr,
 		opts: []grpc.DialOption{
 			grpc.WithInsecure(),
 		},
 		decoder: clientsetscheme.Codecs.UniversalDeserializer(),
-	}, nil
+	}
+	_, err = cli.Version(context.Background())
+	return cli, err
 }
 
 func (xds *xdsClient) makeNodeID() string {

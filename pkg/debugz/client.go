@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -37,8 +38,17 @@ func NewClient(addr string) (DebugzClient, error) {
 }
 
 func (c *debugzClient) verify() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+
 	url := fmt.Sprintf("http://%s/debug/configz", c.debugAddr)
-	resp, err := http.Head(url)
+	req, err := http.NewRequest("HEAD", url, nil)
+	if err != nil {
+		return err
+	}
+	req = req.WithContext(ctx)
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -52,7 +62,14 @@ func (c *debugzClient) verify() error {
 func (c *debugzClient) Resources(ctx context.Context) ([]runtime.Object, error) {
 	var configs []json.RawMessage
 
-	resp, err := http.Get(fmt.Sprintf("http://%s/debug/configz", c.debugAddr))
+	url := fmt.Sprintf("http://%s/debug/configz", c.debugAddr)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

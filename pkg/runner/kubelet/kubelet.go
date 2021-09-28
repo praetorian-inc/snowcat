@@ -13,9 +13,9 @@ import (
 )
 
 var Runner = runner.Runner{
-	Name:       "Kubelet",
+	Name: "Kubelet",
 	Strategies: []runner.Strategy{
-		//&DefaultGatewayStrategy{},
+		&DefaultGatewayStrategy{},
 	},
 }
 

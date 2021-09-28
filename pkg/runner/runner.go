@@ -4,12 +4,8 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/go-multierror"
-)
 
-const (
-	IstioNamespaceKey   = "istioNamespace"
-	DiscoveryAddressKey = "discoveryAddress"
-	DebugzAddressKey    = "debugzAddress"
+	"github.com/praetorian-inc/mithril/pkg/types"
 )
 
 type Runner struct {
@@ -17,22 +13,13 @@ type Runner struct {
 	Strategies []Strategy
 }
 
-func (r *Runner) Run(input map[string]string) error {
+func (r *Runner) Run(input *types.Discovery) error {
 	var errs error
 	for _, strategy := range r.Strategies {
-		res, err := strategy.Run(input)
+		err := strategy.Run(input)
 		if err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("%s: %w", strategy.Name(), err))
 			continue
-		}
-		err = strategy.Verify(res)
-		if err != nil {
-			errs = multierror.Append(errs, fmt.Errorf("%s validator: %w", strategy.Name(), err))
-			continue
-		}
-
-		for k, v := range res {
-			input[k] = v
 		}
 		return nil
 	}
@@ -41,6 +28,5 @@ func (r *Runner) Run(input map[string]string) error {
 
 type Strategy interface {
 	Name() string
-	Run(map[string]string) (map[string]string, error)
-	Verify(map[string]string) error
+	Run(input *types.Discovery) error
 }

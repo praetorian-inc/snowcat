@@ -37,3 +37,10 @@ type Auditor interface {
 	Name() string
 	Audit(c IstioContext) ([]AuditResult, error)
 }
+
+type Discovery struct {
+	IstioNamespace   string
+	DiscoveryAddress string
+	DebugzAddress    string
+	KubeletAddresses []string
+}

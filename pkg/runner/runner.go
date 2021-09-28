@@ -9,6 +9,7 @@ import (
 const (
 	IstioNamespaceKey   = "istioNamespace"
 	DiscoveryAddressKey = "discoveryAddress"
+	DebugzAddressKey    = "debugzAddress"
 )
 
 type Runner struct {

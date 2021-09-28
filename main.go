@@ -7,6 +7,7 @@ import (
 	"github.com/fatih/color"
 
 	"github.com/praetorian-inc/mithril/auditors"
+	"github.com/praetorian-inc/mithril/pkg/context/debugz"
 	"github.com/praetorian-inc/mithril/pkg/context/static"
 	"github.com/praetorian-inc/mithril/pkg/context/xds"
 	"github.com/praetorian-inc/mithril/pkg/runner"
@@ -42,7 +43,13 @@ func main() {
 
 	var ctx types.IstioContext
 
-	if addr, ok := conf[runner.DiscoveryAddressKey]; ok {
+	if addr, ok := conf[runner.DebugzAddressKey]; ok {
+		log.Printf("debugz address: %s", addr)
+		ctx, err = debugz.New(addr)
+		if err != nil {
+			log.Fatalf("failed to initialize context: %s", err)
+		}
+	} else if addr, ok := conf[runner.DiscoveryAddressKey]; ok {
 		log.Printf("discovery address: %s", addr)
 		ctx, err = xds.New(addr)
 		if err != nil {

@@ -22,7 +22,7 @@ type debugzClient struct {
 	decoder runtime.Decoder
 }
 
-// NewClient creates an XDS client given a GRPC address.
+// NewClient creates a client for the istiod debug API.
 func NewClient(addr string) (DebugzClient, error) {
 	err := istioscheme.AddToScheme(clientsetscheme.Scheme)
 	if err != nil {

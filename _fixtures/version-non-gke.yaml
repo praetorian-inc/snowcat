@@ -1,0 +1,15 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  creationTimestamp: "2021-09-21T16:14:24Z"
+  generation: 1
+  labels:
+    install.operator.istio.io/owning-resource-namespace: istio-system
+    istio.io/rev: default
+    operator.istio.io/component: Pilot
+    operator.istio.io/managed: Reconcile
+    operator.istio.io/version: 1.10.3
+  name: tcp-metadata-exchange-1.9
+  namespace: istio-system
+  resourceVersion: "24948"
+  uid: 60a770b0-e269-4342-8ce6-ae132f6dbf5d

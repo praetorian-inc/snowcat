@@ -16,6 +16,7 @@ type Resources struct {
 	DestinationRules      []networkingv1alpha3.DestinationRule
 	Gateways              []networkingv1alpha3.Gateway
 	VirtualServices       []networkingv1alpha3.VirtualService
+	Filters               []networkingv1alpha3.EnvoyFilter
 }
 
 func (r *Resources) Load(resources []runtime.Object) error {
@@ -29,6 +30,8 @@ func (r *Resources) Load(resources []runtime.Object) error {
 			r.DestinationRules = append(r.DestinationRules, *obj)
 		case *networkingv1alpha3.Gateway:
 			r.Gateways = append(r.Gateways, *obj)
+		case *networkingv1alpha3.EnvoyFilter:
+			r.Filters = append(r.Filters, *obj)
 		case *networkingv1alpha3.VirtualService:
 			r.VirtualServices = append(r.VirtualServices, *obj)
 		case *corev1.Namespace:

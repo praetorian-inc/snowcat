@@ -87,7 +87,19 @@ func (ctx *StaticIstioContext) Namespaces() ([]string, error) {
 }
 
 func (ctx *StaticIstioContext) Version() (string, error) {
-	return "", fmt.Errorf("Version() unimplemented in static context")
+	filters, err := ctx.Filters()
+	if err != nil {
+		return "", fmt.Errorf("Error grabbing Version() from filters")
+	}
+	for _, filter := range filters {
+		labels := filter.GetObjectMeta().GetLabels()
+		for labelName, labelValue := range labels {
+			if labelName == "operator.istio.io/version" {
+				return labelValue, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("Couldn't find version label")
 }
 
 func (ctx *StaticIstioContext) IstioOperator() (operatorv1alpha1.IstioOperator, error) {
@@ -108,6 +120,10 @@ func (ctx *StaticIstioContext) DestinationRules() ([]networkingv1alpha3.Destinat
 
 func (ctx *StaticIstioContext) Gateways() ([]networkingv1alpha3.Gateway, error) {
 	return ctx.resources.Gateways, nil
+}
+
+func (ctx *StaticIstioContext) Filters() ([]networkingv1alpha3.EnvoyFilter, error) {
+	return ctx.resources.Filters, nil
 }
 
 func (ctx *StaticIstioContext) VirtualServices() ([]networkingv1alpha3.VirtualService, error) {

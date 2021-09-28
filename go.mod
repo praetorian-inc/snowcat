@@ -10,6 +10,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/spyzhov/ajson v0.4.2
 	google.golang.org/grpc v1.40.0
+	gopkg.in/yaml.v2 v2.4.0
 	istio.io/api v0.0.0-20210922023733-37753c518070
 	istio.io/client-go v1.12.0-alpha.1.0.20210922024145-e0d34c580b30
 	istio.io/istio v0.0.0-20210922210956-6b3141a0c5d3

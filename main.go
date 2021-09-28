@@ -11,6 +11,7 @@ import (
 	"github.com/praetorian-inc/mithril/pkg/debugz"
 	"github.com/praetorian-inc/mithril/pkg/runner"
 	"github.com/praetorian-inc/mithril/pkg/runner/discovery"
+	"github.com/praetorian-inc/mithril/pkg/runner/istiod"
 	"github.com/praetorian-inc/mithril/pkg/runner/namespace"
 	"github.com/praetorian-inc/mithril/pkg/types"
 	"github.com/praetorian-inc/mithril/pkg/xds"
@@ -29,6 +30,7 @@ func main() {
 	}
 
 	runners := []runner.Runner{
+		istiod.Runner,
 		namespace.Runner,
 		discovery.Runner,
 	}

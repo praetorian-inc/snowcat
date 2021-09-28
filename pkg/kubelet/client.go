@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 
-	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
@@ -23,13 +22,8 @@ type kubeletClient struct {
 	decoder runtime.Decoder
 }
 
-// NewClient creates an XDS client given a GRPC address.
+// NewClient creates a kubelet client on the read-only port.
 func NewClient(addr string) (KubeletClient, error) {
-	err := istioscheme.AddToScheme(clientsetscheme.Scheme)
-	if err != nil {
-		return nil, err
-	}
-
 	cli := &kubeletClient{
 		kubeletAddr: addr,
 		decoder:     clientsetscheme.Codecs.UniversalDeserializer(),

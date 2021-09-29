@@ -10,6 +10,7 @@ import (
 	"github.com/praetorian-inc/mithril/pkg/debugz"
 	"github.com/praetorian-inc/mithril/pkg/kubelet"
 	"github.com/praetorian-inc/mithril/pkg/runner"
+	"github.com/praetorian-inc/mithril/pkg/types"
 	"github.com/praetorian-inc/mithril/pkg/xds"
 )
 
@@ -41,7 +42,7 @@ func hasDiscoveryService(host string) bool {
 }
 
 func hasDebugService(host string) bool {
-	_, err = debugz.NewClient(host + ":8080")
+	_, err := debugz.NewClient(host + ":8080")
 	if err != nil {
 		return false
 	}
@@ -58,6 +59,7 @@ func isDebugIstiod(host string) bool {
 	if hasDebugService(host) {
 		return true
 	}
+	return false
 }
 
 type KubeletStrategy struct{}
@@ -66,15 +68,12 @@ func (s *KubeletStrategy) Name() string {
 	return "kubelet"
 }
 
-func (s *KubeletStrategy) Run(input map[string]string) (map[string]string, error) {
+func (s *KubeletStrategy) Run(input *types.Discovery) error {
 	ctx := context.Background()
 
-	var istios []string
+	var ips []string
 
-	// TODO: fetch this from runner input
-	kubelets := []string{"10.48.0.1:10255", "10.48.1.1:10255", "10.48.2.1:10255", "10.48.3.1:10255"}
-
-	for _, addr := range kubelets {
+	for _, addr := range input.KubeletAddresses {
 		log.Printf("fetching pods from %s kubelet", addr)
 		k, err := kubelet.NewClient(addr)
 		if err != nil {
@@ -91,39 +90,30 @@ func (s *KubeletStrategy) Run(input map[string]string) (map[string]string, error
 		for _, pod := range pods {
 			ip := pod.Status.PodIP
 			if isRunning(pod) && isIstiod(pod) && isDebugIstiod(ip) {
-				istios = append(istios, ip)
+				ips = append(ips, ip)
 			}
 		}
 	}
 
-	if len(istios) == 0 {
-		return nil, fmt.Errorf("failed to find istiod")
+	if len(ips) == 0 {
+		return fmt.Errorf("failed to find istiod")
 	}
 
-	for _, host := range istios {
-		log.Printf("%s", host)
-	}
-
-	for _, host := range istios {
-		if hasDiscoveryService(host) {
-			// TODO: set struct field for discovery
+	var found bool
+	for _, ip := range ips {
+		if hasDiscoveryService(ip) {
+			input.DiscoveryAddress = ip + ":15010"
+			found = true
+		}
+		if hasDebugService(ip) {
+			input.DebugzAddress = ip + ":8080"
+			found = true
+		}
+		if found {
 			break
 		}
-		if hasDebugService(host) {
-			// TODO: set struct field for debug
-			break
-		}
 	}
 
-	// TODO: set struct field
-	/*
-		return map[string]string{
-			runner.IstioIPsKey: "istios",
-		}, nil
-	*/
-	return map[string]string{}, nil
-}
-
-func (s *KubeletStrategy) Verify(input map[string]string) error {
+	input.IstiodIPs = ips
 	return nil
 }

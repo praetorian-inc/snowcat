@@ -3,6 +3,7 @@ package debugz
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -68,7 +69,23 @@ func (c *DebugzContext) Namespaces() ([]string, error) {
 }
 
 func (c *DebugzContext) Version() (string, error) {
-	return "", fmt.Errorf("Version() unimplemented in static context")
+	filters, err := c.Filters()
+	if err != nil {
+		return "", fmt.Errorf("Error grabbing Version() from filters")
+	}
+	for _, filter := range filters {
+		labels := filter.GetObjectMeta().GetLabels()
+		for labelName, labelValue := range labels {
+			if labelName == "operator.istio.io/version" {
+				// could be something like 1.4.10-gke.8, so drop everything after the -
+				if strings.Contains(labelValue, "-") {
+					labelValue = strings.Split(labelValue, "-")[0]
+				}
+				return labelValue, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("Couldn't find version label")
 }
 
 func (c *DebugzContext) IstioOperator() (operatorv1alpha1.IstioOperator, error) {
@@ -89,6 +106,10 @@ func (c *DebugzContext) DestinationRules() ([]networkingv1alpha3.DestinationRule
 
 func (c *DebugzContext) Gateways() ([]networkingv1alpha3.Gateway, error) {
 	return c.resources.Gateways, nil
+}
+
+func (c *DebugzContext) Filters() ([]networkingv1alpha3.EnvoyFilter, error) {
+	return c.resources.Filters, nil
 }
 
 func (c *DebugzContext) VirtualServices() ([]networkingv1alpha3.VirtualService, error) {

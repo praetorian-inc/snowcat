@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"strings"
 
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -95,6 +96,10 @@ func (ctx *StaticIstioContext) Version() (string, error) {
 		labels := filter.GetObjectMeta().GetLabels()
 		for labelName, labelValue := range labels {
 			if labelName == "operator.istio.io/version" {
+				// could be something like 1.4.10-gke.8, so drop everything after the -
+				if strings.Contains(labelValue, "-") {
+					labelValue = strings.Split(labelValue, "-")[0]
+				}
 				return labelValue, nil
 			}
 		}

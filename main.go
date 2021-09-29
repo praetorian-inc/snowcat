@@ -59,6 +59,10 @@ func main() {
 			log.Printf("failed to query xds resources: %s", err)
 		}
 		resources.Load(res)
+		disco.IstioVersion, err = cli.Version(ctx)
+		if err != nil {
+			log.Printf("failed to query versions via xds resources: %s", err)
+		}
 		cli.Close()
 	}
 	if disco.DebugzAddress != "" {
@@ -70,6 +74,10 @@ func main() {
 		res, err := cli.Resources(ctx)
 		if err != nil {
 			log.Printf("failed to query debugz resources: %s", err)
+		}
+		disco.IstioVersion, err = cli.Version(ctx)
+		if err != nil {
+			log.Printf("failed to query versions via debugz resources: %s", err)
 		}
 		resources.Load(res)
 	}

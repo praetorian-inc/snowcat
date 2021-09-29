@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"regexp"
 	"time"
 
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
@@ -15,6 +17,7 @@ import (
 
 type DebugzClient interface {
 	Resources(ctx context.Context) ([]runtime.Object, error)
+	Version(ctx context.Context) (string, error)
 }
 
 type debugzClient struct {
@@ -89,4 +92,31 @@ func (c *debugzClient) Resources(ctx context.Context) ([]runtime.Object, error) 
 	}
 
 	return resources, nil
+}
+
+func getVersionFromBody(body []byte) (string, error) {
+	r := regexp.MustCompile(`istio_version\": \"(.*)\",`)
+	matches := r.FindAllSubmatch(body, -1)
+	if len(matches) == 0 {
+		return "", fmt.Errorf("could not find istio_version in syncz debug endpoint")
+	}
+	return string(matches[0][1]), nil
+}
+
+func (c *debugzClient) Version(ctx context.Context) (string, error) {
+	url := fmt.Sprintf("http://%s/debug/syncz", c.debugAddr)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+	req = req.WithContext(ctx)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return getVersionFromBody(body)
 }

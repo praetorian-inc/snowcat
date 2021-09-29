@@ -3,10 +3,10 @@ package discovery
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/praetorian-inc/mithril/pkg/envoy"
 	"github.com/praetorian-inc/mithril/pkg/runner"
+	"github.com/praetorian-inc/mithril/pkg/types"
 	"github.com/praetorian-inc/mithril/pkg/xds"
 )
 
@@ -37,15 +37,16 @@ func (s *IstiodStrategy) Name() string {
 	return "istiod"
 }
 
-func (s *IstiodStrategy) Run(input map[string]string) (map[string]string, error) {
-	addr := fmt.Sprintf("istiod.%s.svc.cluster.local:15010", input[runner.IstioNamespaceKey])
-	return map[string]string{
-		runner.DiscoveryAddressKey: addr,
-	}, nil
-}
-
-func (s *IstiodStrategy) Verify(input map[string]string) error {
-	return verifyDiscoveryAddress(input[runner.DiscoveryAddressKey])
+func (s *IstiodStrategy) Run(input *types.Discovery) error {
+	if input.IstioNamespace == "" {
+		return fmt.Errorf("istio namespace required")
+	}
+	addr := fmt.Sprintf("istiod.%s.svc.cluster.local:15010", input.IstioNamespace)
+	if err := verifyDiscoveryAddress(addr); err != nil {
+		return err
+	}
+	input.DiscoveryAddress = addr
+	return nil
 }
 
 type IstioPilotStrategy struct{}
@@ -54,15 +55,16 @@ func (s *IstioPilotStrategy) Name() string {
 	return "istio-pilot"
 }
 
-func (s *IstioPilotStrategy) Run(input map[string]string) (map[string]string, error) {
-	addr := fmt.Sprintf("istio-pilot.%s.svc.cluster.local:15010", input[runner.IstioNamespaceKey])
-	return map[string]string{
-		runner.DiscoveryAddressKey: addr,
-	}, nil
-}
-
-func (s *IstioPilotStrategy) Verify(input map[string]string) error {
-	return verifyDiscoveryAddress(input[runner.DiscoveryAddressKey])
+func (s *IstioPilotStrategy) Run(input *types.Discovery) error {
+	if input.IstioNamespace == "" {
+		return fmt.Errorf("istio namespace required")
+	}
+	addr := fmt.Sprintf("istio-pilot.%s.svc.cluster.local:15010", input.IstioNamespace)
+	if err := verifyDiscoveryAddress(addr); err != nil {
+		return err
+	}
+	input.DiscoveryAddress = addr
+	return nil
 }
 
 type EnvoyConfigStrategy struct{}
@@ -71,23 +73,18 @@ func (s *EnvoyConfigStrategy) Name() string {
 	return "envoy"
 }
 
-func (s *EnvoyConfigStrategy) Run(map[string]string) (map[string]string, error) {
-	log.Println("Attempting to retrieve discovery endpoint using Envoy admin panel...")
-
-	// curl -s 127.0.0.1:15000/server_info | jq -r .node.metadata.PROXY_CONFIG.discoveryAddress
+func (s *EnvoyConfigStrategy) Run(input *types.Discovery) error {
 	ec, err := envoy.RetrieveConfig("http://localhost:15000/config_dump")
 	if err != nil {
-		return nil, err
+		return err
 	}
-	address, err := ec.DiscoveryAddress()
+	addr, err := ec.DiscoveryAddress()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return map[string]string{
-		runner.DiscoveryAddressKey: address,
-	}, nil
-}
-
-func (s *EnvoyConfigStrategy) Verify(input map[string]string) error {
-	return verifyDiscoveryAddress(input[runner.DiscoveryAddressKey])
+	if err := verifyDiscoveryAddress(addr); err != nil {
+		return err
+	}
+	input.DiscoveryAddress = addr
+	return nil
 }

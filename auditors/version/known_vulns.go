@@ -2,6 +2,7 @@ package version
 
 import (
 	"fmt"
+
 	"github.com/praetorian-inc/mithril/pkg/knownvulns"
 
 	"github.com/praetorian-inc/mithril/auditors"
@@ -18,15 +19,14 @@ func (a *Auditor) Name() string {
 	return "Known Vulnerable Version"
 }
 
-func (a *Auditor) Audit(c types.IstioContext) ([]types.AuditResult, error) {
+func (a *Auditor) Audit(disco types.Discovery, _ types.Resources) ([]types.AuditResult, error) {
 	var results []types.AuditResult
 
-	version, err := c.Version()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get version: %w", err)
+	if disco.IstioVersion == "" {
+		return nil, fmt.Errorf("version required")
 	}
 
-	vulns, err := knownvulns.GetVulnsForVersion(version)
+	vulns, err := knownvulns.GetVulnsForVersion(disco.IstioVersion)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving vulns for version: %w", err)
 	}

@@ -24,14 +24,10 @@ func isClientTLSSettingSafe(tls *networkingv1alpha3.ClientTLSSettings) bool {
 	return tls == nil || tls.Mode.String() != "SIMPLE" || tls.CaCertificates != ""
 }
 
-func (a *Auditor) Audit(c types.IstioContext) ([]types.AuditResult, error) {
+func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.AuditResult, error) {
 	var results []types.AuditResult
 
-	rules, err := c.DestinationRules()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get destination rules: %w", err)
-	}
-	for _, rule := range rules {
+	for _, rule := range resources.DestinationRules {
 		if !isClientTLSSettingSafe(rule.Spec.TrafficPolicy.Tls) {
 			results = append(results, types.AuditResult{
 				Name:        a.Name(),

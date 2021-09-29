@@ -8,7 +8,9 @@ require (
 	github.com/fatih/color v1.12.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/jackpal/gateway v1.0.7
 	github.com/spyzhov/ajson v0.4.2
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/grpc v1.40.0
 	gopkg.in/yaml.v2 v2.4.0
 	istio.io/api v0.0.0-20210922023733-37753c518070

@@ -17,14 +17,10 @@ func (a *Auditor) Name() string {
 	return "Overly Broad Gateway Hosts"
 }
 
-func (a *Auditor) Audit(c types.IstioContext) ([]types.AuditResult, error) {
+func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.AuditResult, error) {
 	var results []types.AuditResult
 
-	gateways, err := c.Gateways()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get gateways: %w", err)
-	}
-	for _, gateway := range gateways {
+	for _, gateway := range resources.Gateways {
 		for _, server := range gateway.Spec.Servers {
 			for _, host := range server.Hosts {
 				if host == "*" {

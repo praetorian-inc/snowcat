@@ -1,9 +1,17 @@
 package types
 
 import (
+	"context"
+	"io"
+	"log"
+
 	networking "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security "istio.io/client-go/pkg/apis/security/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	operator "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type Config struct {
@@ -35,12 +43,66 @@ const (
 
 type Auditor interface {
 	Name() string
-	Audit(c IstioContext) ([]AuditResult, error)
+	Audit(Discovery, Resources) ([]AuditResult, error)
 }
 
 type Discovery struct {
+	IstioVersion     string
 	IstioNamespace   string
 	DiscoveryAddress string
 	DebugzAddress    string
 	KubeletAddresses []string
+}
+
+type ObjectGetter interface {
+	io.Closer
+
+	Resources(ctx context.Context) []runtime.Object
+}
+
+type Resources struct {
+	counter int
+
+	Namespaces            []corev1.Namespace
+	PeerAuthentications   []securityv1beta1.PeerAuthentication
+	AuthorizationPolicies []securityv1beta1.AuthorizationPolicy
+	DestinationRules      []networkingv1alpha3.DestinationRule
+	Gateways              []networkingv1alpha3.Gateway
+	VirtualServices       []networkingv1alpha3.VirtualService
+	Filters               []networkingv1alpha3.EnvoyFilter
+}
+
+func (r *Resources) Load(resources []runtime.Object) error {
+	for _, resource := range resources {
+		switch obj := resource.(type) {
+		case *securityv1beta1.PeerAuthentication:
+			r.PeerAuthentications = append(r.PeerAuthentications, *obj)
+			r.counter++
+		case *securityv1beta1.AuthorizationPolicy:
+			r.AuthorizationPolicies = append(r.AuthorizationPolicies, *obj)
+			r.counter++
+		case *networkingv1alpha3.DestinationRule:
+			r.DestinationRules = append(r.DestinationRules, *obj)
+			r.counter++
+		case *networkingv1alpha3.Gateway:
+			r.Gateways = append(r.Gateways, *obj)
+			r.counter++
+		case *networkingv1alpha3.EnvoyFilter:
+			r.Filters = append(r.Filters, *obj)
+			r.counter++
+		case *networkingv1alpha3.VirtualService:
+			r.VirtualServices = append(r.VirtualServices, *obj)
+			r.counter++
+		case *corev1.Namespace:
+			r.Namespaces = append(r.Namespaces, *obj)
+			r.counter++
+		default:
+			log.Printf("unknown resource %T", obj)
+		}
+	}
+	return nil
+}
+
+func (r *Resources) Len() int {
+	return r.counter
 }

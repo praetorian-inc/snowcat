@@ -3,11 +3,11 @@ package authz
 import (
 	"fmt"
 
-	"github.com/praetorian-inc/mithril/auditors"
-	"github.com/praetorian-inc/mithril/pkg/types"
-
 	apiv1beta "istio.io/api/security/v1beta1"
 	security "istio.io/client-go/pkg/apis/security/v1beta1"
+
+	"github.com/praetorian-inc/mithril/auditors"
+	"github.com/praetorian-inc/mithril/pkg/types"
 )
 
 const (
@@ -25,15 +25,10 @@ func (a *Auditor) Name() string {
 	return "Safer Authorization Policies"
 }
 
-func (a *Auditor) Audit(c types.IstioContext) ([]types.AuditResult, error) {
+func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.AuditResult, error) {
 	var results []types.AuditResult
 
-	policies, err := c.AuthorizationPolicies()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get authz policies: %w", err)
-	}
-
-	for _, policy := range policies {
+	for _, policy := range resources.AuthorizationPolicies {
 		switch action := policy.Spec.Action; action {
 		case ALLOW:
 			offendingRules := evalAllowPolicy(policy)

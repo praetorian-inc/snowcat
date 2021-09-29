@@ -1,19 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 
 	"github.com/fatih/color"
 
 	"github.com/praetorian-inc/mithril/auditors"
-	"github.com/praetorian-inc/mithril/pkg/context/debugz"
-	"github.com/praetorian-inc/mithril/pkg/context/static"
-	"github.com/praetorian-inc/mithril/pkg/context/xds"
+	"github.com/praetorian-inc/mithril/pkg/debugz"
 	"github.com/praetorian-inc/mithril/pkg/runner"
 	"github.com/praetorian-inc/mithril/pkg/runner/discovery"
 	"github.com/praetorian-inc/mithril/pkg/runner/namespace"
 	"github.com/praetorian-inc/mithril/pkg/types"
+	"github.com/praetorian-inc/mithril/pkg/xds"
 
 	_ "github.com/praetorian-inc/mithril/auditors/auth"
 	_ "github.com/praetorian-inc/mithril/auditors/authz"
@@ -32,43 +32,52 @@ func main() {
 		namespace.Runner,
 		discovery.Runner,
 	}
-	conf := make(map[string]string)
+	var disco types.Discovery
 	for _, r := range runners {
 		log.Printf("running %s runner", r.Name)
 
-		err := r.Run(conf)
+		err := r.Run(&disco)
 		if err != nil {
 			log.Printf("failed to run %s: %s", r.Name, err)
 		}
 	}
 
-	var ctx types.IstioContext
+	ctx := context.Background()
+	var resources types.Resources
+	if disco.DiscoveryAddress != "" {
+		cli, err := xds.NewClient(disco.DiscoveryAddress)
+		if err != nil {
+			log.Printf("failed to initialize xds client: %s", err)
+		}
+		res, err := cli.Resources(ctx)
+		if err != nil {
+			log.Printf("failed to query xds resources: %s", err)
+		}
+		resources.Load(res)
+		cli.Close()
+	}
+	if disco.DebugzAddress != "" {
+		cli, err := debugz.NewClient(disco.DebugzAddress)
+		if err != nil {
+			log.Printf("failed to initialize debugz client: %s", err)
+		}
+		res, err := cli.Resources(ctx)
+		if err != nil {
+			log.Printf("failed to query debugz resources: %s", err)
+		}
+		resources.Load(res)
+	}
 
-	if addr, ok := conf[runner.DebugzAddressKey]; ok {
-		log.Printf("debugz address: %s", addr)
-		ctx, err = debugz.New(addr)
-		if err != nil {
-			log.Fatalf("failed to initialize context: %s", err)
-		}
-	} else if addr, ok := conf[runner.DiscoveryAddressKey]; ok {
-		log.Printf("discovery address: %s", addr)
-		ctx, err = xds.New(addr)
-		if err != nil {
-			log.Fatalf("failed to initialize context: %s", err)
-		}
-	} else {
-		log.Printf("discovery address not found, using static test fixures")
-		ctx, err = static.New("_fixtures/")
-		if err != nil {
-			log.Fatalf("failed to initialize context: %s", err)
-		}
+	if resources.Len() == 0 {
+		// TODO: import from static dir
+		log.Fatalf("no resources discovered")
 	}
 
 	var results []types.AuditResult
 	for _, auditor := range auditors {
 		log.Printf("running auditor %s", auditor.Name())
 
-		res, err := auditor.Audit(ctx)
+		res, err := auditor.Audit(disco, resources)
 		if err != nil {
 			log.Printf("%s failed to run: %s", auditor.Name(), err)
 		}

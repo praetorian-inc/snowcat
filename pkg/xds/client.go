@@ -54,7 +54,8 @@ var (
 
 type DiscoveryClient interface {
 	Version(ctx context.Context) (string, error)
-	Resources(ctx context.Context, gvk schema.GroupVersionKind) ([]runtime.Object, error)
+	List(ctx context.Context, gvk schema.GroupVersionKind) ([]runtime.Object, error)
+	Resources(ctx context.Context) ([]runtime.Object, error)
 	Close() error
 }
 
@@ -252,7 +253,7 @@ func decodeMCPResource(data []byte, gvk schema.GroupVersionKind) (runtime.Object
 // Resources queries the XDS server for a given GroupVersionKind
 // (e.g. security.istio.io/v1beta1/AuthorizationPolicy) and
 // returns these resources as Kubernetes runtime.Objects.
-func (xds *xdsClient) Resources(ctx context.Context, gvk schema.GroupVersionKind) ([]runtime.Object, error) {
+func (xds *xdsClient) List(ctx context.Context, gvk schema.GroupVersionKind) ([]runtime.Object, error) {
 	typeUrl := fmt.Sprintf("%s/%s/%s", gvk.Group, gvk.Version, gvk.Kind)
 	req := xds.makeRequest(typeUrl)
 	resp, err := xds.send(ctx, req)
@@ -272,5 +273,17 @@ func (xds *xdsClient) Resources(ctx context.Context, gvk schema.GroupVersionKind
 		resources = append(resources, obj)
 	}
 
+	return resources, nil
+}
+
+func (xds *xdsClient) Resources(ctx context.Context) ([]runtime.Object, error) {
+	var resources []runtime.Object
+	for gvk := range istioscheme.Scheme.AllKnownTypes() {
+		res, err := xds.List(ctx, gvk)
+		if err != nil {
+			return nil, err
+		}
+		resources = append(resources, res...)
+	}
 	return resources, nil
 }

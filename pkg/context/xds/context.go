@@ -10,7 +10,6 @@ import (
 	operatorv1alpha1 "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 
-	istiocontext "github.com/praetorian-inc/mithril/pkg/context"
 	"github.com/praetorian-inc/mithril/pkg/types"
 	"github.com/praetorian-inc/mithril/pkg/xds"
 )
@@ -19,7 +18,7 @@ import (
 type DiscoveryContext struct {
 	client xds.DiscoveryClient
 
-	resources *istiocontext.Resources
+	resources *types.Resources
 }
 
 // New creates a new static IstioContext using yaml files from the provided directory.
@@ -35,7 +34,7 @@ func New(addr string) (types.IstioContext, error) {
 
 	c := &DiscoveryContext{
 		client:    client,
-		resources: &istiocontext.Resources{},
+		resources: &types.Resources{},
 	}
 	return c, c.load()
 }

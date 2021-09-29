@@ -11,7 +11,6 @@ import (
 	operatorv1alpha1 "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 
-	istiocontext "github.com/praetorian-inc/mithril/pkg/context"
 	"github.com/praetorian-inc/mithril/pkg/debugz"
 	"github.com/praetorian-inc/mithril/pkg/types"
 )
@@ -20,7 +19,7 @@ import (
 type DebugzContext struct {
 	client debugz.DebugzClient
 
-	resources *istiocontext.Resources
+	resources *types.Resources
 }
 
 // New creates a new static IstioContext using yaml files from the provided directory.
@@ -36,7 +35,7 @@ func New(addr string) (types.IstioContext, error) {
 
 	c := &DebugzContext{
 		client:    client,
-		resources: &istiocontext.Resources{},
+		resources: &types.Resources{},
 	}
 	return c, c.load()
 }

@@ -8,6 +8,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/praetorian-inc/mithril/pkg/debugz"
+	"github.com/praetorian-inc/mithril/pkg/envoy"
 	"github.com/praetorian-inc/mithril/pkg/kubelet"
 	"github.com/praetorian-inc/mithril/pkg/runner"
 	"github.com/praetorian-inc/mithril/pkg/types"
@@ -18,7 +19,9 @@ var Runner = runner.Runner{
 	Name: "Istio Control Plane",
 	Strategies: []runner.Strategy{
 		&KubeletStrategy{},
-		// &portScanStrategy{},
+		&IstiodStrategy{},
+		&IstioPilotStrategy{},
+		&EnvoyConfigStrategy{},
 	},
 }
 
@@ -113,7 +116,71 @@ func (s *KubeletStrategy) Run(input *types.Discovery) error {
 			break
 		}
 	}
+	return nil
+}
 
-	input.IstiodIPs = ips
+type IstiodStrategy struct{}
+
+func (s *IstiodStrategy) Name() string {
+	return "istiod"
+}
+
+func (s *IstiodStrategy) Run(input *types.Discovery) error {
+	if input.IstioNamespace == "" {
+		return fmt.Errorf("istio namespace required")
+	}
+	addr := fmt.Sprintf("istiod.%s.svc.cluster.local", input.IstioNamespace)
+	if hasDiscoveryService(addr) {
+		input.DiscoveryAddress = addr
+	}
+	if hasDebugService(addr) {
+		input.DebugzAddress = addr
+	}
+	return nil
+}
+
+type IstioPilotStrategy struct{}
+
+func (s *IstioPilotStrategy) Name() string {
+	return "istio-pilot"
+}
+
+func (s *IstioPilotStrategy) Run(input *types.Discovery) error {
+	if input.IstioNamespace == "" {
+		return fmt.Errorf("istio namespace required")
+	}
+	addr := fmt.Sprintf("istio-pilot.%s.svc.cluster.local", input.IstioNamespace)
+	if hasDiscoveryService(addr) {
+		input.DiscoveryAddress = addr
+	}
+	if hasDebugService(addr) {
+		input.DebugzAddress = addr
+	}
+	return nil
+}
+
+type EnvoyConfigStrategy struct{}
+
+func (s *EnvoyConfigStrategy) Name() string {
+	return "envoy"
+}
+
+func (s *EnvoyConfigStrategy) Run(input *types.Discovery) error {
+	ec, err := envoy.RetrieveConfig("http://localhost:15000/config_dump")
+	if err != nil {
+		return err
+	}
+	addr, err := ec.DiscoveryAddress()
+	if err != nil {
+		return err
+	}
+
+	c, err := xds.NewClient(addr)
+	if err != nil {
+		return err
+	}
+	c.Close()
+
+	input.DiscoveryAddress = addr
 	return nil
 }

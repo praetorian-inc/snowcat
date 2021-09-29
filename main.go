@@ -10,7 +10,6 @@ import (
 	"github.com/praetorian-inc/mithril/auditors"
 	"github.com/praetorian-inc/mithril/pkg/debugz"
 	"github.com/praetorian-inc/mithril/pkg/runner"
-	"github.com/praetorian-inc/mithril/pkg/runner/discovery"
 	"github.com/praetorian-inc/mithril/pkg/runner/istiod"
 	"github.com/praetorian-inc/mithril/pkg/runner/kubelet"
 	"github.com/praetorian-inc/mithril/pkg/runner/namespace"
@@ -34,9 +33,8 @@ func main() {
 	// correctly. Reordering this list may result in failed discovery.
 	runners := []runner.Runner{
 		kubelet.Runner,
-		istiod.Runner,
 		namespace.Runner,
-		discovery.Runner,
+		istiod.Runner,
 	}
 	var disco types.Discovery
 	for _, r := range runners {

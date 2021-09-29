@@ -6,9 +6,11 @@ import (
 	"log"
 
 	"github.com/fatih/color"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/praetorian-inc/mithril/auditors"
 	"github.com/praetorian-inc/mithril/pkg/debugz"
+	kubeletclient "github.com/praetorian-inc/mithril/pkg/kubelet"
 	"github.com/praetorian-inc/mithril/pkg/runner"
 	"github.com/praetorian-inc/mithril/pkg/runner/istiod"
 	"github.com/praetorian-inc/mithril/pkg/runner/kubelet"
@@ -20,6 +22,7 @@ import (
 	_ "github.com/praetorian-inc/mithril/auditors/authz"
 	_ "github.com/praetorian-inc/mithril/auditors/destinationrule"
 	_ "github.com/praetorian-inc/mithril/auditors/gateway"
+	_ "github.com/praetorian-inc/mithril/auditors/install"
 	_ "github.com/praetorian-inc/mithril/auditors/version"
 )
 
@@ -72,6 +75,21 @@ func main() {
 			log.Printf("failed to query debugz resources: %s", err)
 		}
 		resources.Load(res)
+	}
+	if len(disco.KubeletAddresses) > 0 {
+		for _, addr := range disco.KubeletAddresses {
+			cli, err := kubeletclient.NewClient(addr)
+			pods, err := cli.Pods(ctx)
+			if err != nil {
+				log.Printf("failed to query pods from kubelet: %s", err)
+				continue
+			}
+			var res []runtime.Object
+			for _, pod := range pods {
+				res = append(res, &pod)
+			}
+			resources.Load(res)
+		}
 	}
 
 	if resources.Len() == 0 {

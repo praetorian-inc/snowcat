@@ -72,6 +72,7 @@ type Resources struct {
 	counter int
 
 	Namespaces            []corev1.Namespace
+	Pods                  []corev1.Pod
 	PeerAuthentications   []securityv1beta1.PeerAuthentication
 	AuthorizationPolicies []securityv1beta1.AuthorizationPolicy
 	DestinationRules      []networkingv1alpha3.DestinationRule
@@ -100,6 +101,9 @@ func (r *Resources) Load(resources []runtime.Object) error {
 			r.counter++
 		case *networkingv1alpha3.VirtualService:
 			r.VirtualServices = append(r.VirtualServices, *obj)
+			r.counter++
+		case *corev1.Pod:
+			r.Pods = append(r.Pods, *obj)
 			r.counter++
 		case *corev1.Namespace:
 			r.Namespaces = append(r.Namespaces, *obj)

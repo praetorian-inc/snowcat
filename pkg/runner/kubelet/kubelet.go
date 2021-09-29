@@ -40,7 +40,7 @@ func (s *DefaultGatewayStrategy) Run(input *types.Discovery) error {
 
 	if ip4 := gateway.To4(); ip4 != nil {
 		for i := 0; i < 256; i++ {
-            ip := net.IPv4(ip4[0], ip4[1], byte(i), ip4[3])
+			ip := net.IPv4(ip4[0], ip4[1], byte(i), ip4[3])
 			hosts = append(hosts, ip.String())
 		}
 	}

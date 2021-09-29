@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,8 +33,17 @@ func NewClient(addr string) (KubeletClient, error) {
 }
 
 func (c *kubeletClient) verify() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+
 	url := fmt.Sprintf("http://%s/healthz/ping", c.kubeletAddr)
-	resp, err := http.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+	req = req.WithContext(ctx)
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -45,7 +55,14 @@ func (c *kubeletClient) verify() error {
 
 // Pods queries the read-only kubelet API for a list of pods running on that node.
 func (c *kubeletClient) Pods(ctx context.Context) ([]v1.Pod, error) {
-	resp, err := http.Get(fmt.Sprintf("http://%s/pods", c.kubeletAddr))
+	url := fmt.Sprintf("http://%s/pods", c.kubeletAddr)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

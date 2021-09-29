@@ -10,7 +10,8 @@ import (
 	"github.com/praetorian-inc/mithril/auditors"
 	"github.com/praetorian-inc/mithril/pkg/debugz"
 	"github.com/praetorian-inc/mithril/pkg/runner"
-	"github.com/praetorian-inc/mithril/pkg/runner/discovery"
+	"github.com/praetorian-inc/mithril/pkg/runner/istiod"
+	"github.com/praetorian-inc/mithril/pkg/runner/kubelet"
 	"github.com/praetorian-inc/mithril/pkg/runner/namespace"
 	"github.com/praetorian-inc/mithril/pkg/types"
 	"github.com/praetorian-inc/mithril/pkg/xds"
@@ -28,9 +29,12 @@ func main() {
 		log.Fatalf("failed to initialize auditors: %s", err)
 	}
 
+	// Runners are executed in a specific order to resolve dependencies
+	// correctly. Reordering this list may result in failed discovery.
 	runners := []runner.Runner{
+		kubelet.Runner,
 		namespace.Runner,
-		discovery.Runner,
+		istiod.Runner,
 	}
 	var disco types.Discovery
 	for _, r := range runners {
@@ -45,6 +49,7 @@ func main() {
 	ctx := context.Background()
 	var resources types.Resources
 	if disco.DiscoveryAddress != "" {
+		log.Printf("querying xds at %s", disco.DiscoveryAddress)
 		cli, err := xds.NewClient(disco.DiscoveryAddress)
 		if err != nil {
 			log.Printf("failed to initialize xds client: %s", err)
@@ -57,6 +62,7 @@ func main() {
 		cli.Close()
 	}
 	if disco.DebugzAddress != "" {
+		log.Printf("querying debug API at %s", disco.DebugzAddress)
 		cli, err := debugz.NewClient(disco.DebugzAddress)
 		if err != nil {
 			log.Printf("failed to initialize debugz client: %s", err)

@@ -39,7 +39,7 @@ func (s *DefaultGatewayStrategy) Run(input *types.Discovery) error {
 	}
 
 	if ip4 := gateway.To4(); ip4 != nil {
-		for i := 1; i < 256; i++ {
+		for i := 0; i < 256; i++ {
 			ips = append(ips, net.IPv4(ip4[0], ip4[1], byte(i), ip4[3]))
 		}
 	}
@@ -55,4 +55,5 @@ func (s *DefaultGatewayStrategy) Run(input *types.Discovery) error {
 	}
 
 	input.KubeletAddresses = results
+	return nil
 }

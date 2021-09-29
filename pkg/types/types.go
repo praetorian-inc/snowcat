@@ -47,11 +47,19 @@ type Auditor interface {
 }
 
 type Discovery struct {
-	IstioVersion     string
-	IstioNamespace   string
+	// IstioVersion is the version of the istio control plane.
+	IstioVersion string
+	// IstioNamespace is the Kubernetes namespace of the istio control plane.
+	IstioNamespace string
+	// DiscoveryAddress is the IP:port of istiod's unauthenticated xds.
 	DiscoveryAddress string
-	DebugzAddress    string
+	// DebugzAddress is the IP:port of istiod's debug API.
+	DebugzAddress string
+	// KubeletAddresses is a list of addresses of each node's kubelet read-only API.
+	// These addresses have the form "host:port".
 	KubeletAddresses []string
+	// IstiodIPs is a list of IP addresses of that appear to be the istio control plane.
+	IstiodIPs []string
 }
 
 type ObjectGetter interface {

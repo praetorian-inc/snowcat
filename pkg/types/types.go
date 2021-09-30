@@ -3,10 +3,13 @@ package types
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	networking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -17,6 +20,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/hashicorp/go-multierror"
+	"github.com/praetorian-inc/mithril/pkg/util/namer"
 )
 
 type Config struct {
@@ -84,7 +90,7 @@ type Resources struct {
 	DestinationRules      []networkingv1alpha3.DestinationRule
 	Gateways              []networkingv1alpha3.Gateway
 	VirtualServices       []networkingv1alpha3.VirtualService
-	Filters               []networkingv1alpha3.EnvoyFilter
+	EnvoyFilters          []networkingv1alpha3.EnvoyFilter
 	ServiceEntries        []networkingv1alpha3.ServiceEntry
 }
 
@@ -111,7 +117,7 @@ func (r *Resources) Load(resources []runtime.Object) error {
 			r.Gateways = append(r.Gateways, *obj)
 			r.counter++
 		case *networkingv1alpha3.EnvoyFilter:
-			r.Filters = append(r.Filters, *obj)
+			r.EnvoyFilters = append(r.EnvoyFilters, *obj)
 			r.counter++
 		case *networkingv1alpha3.VirtualService:
 			r.VirtualServices = append(r.VirtualServices, *obj)
@@ -168,4 +174,68 @@ func (r *Resources) load(data []byte) error {
 
 func (r *Resources) Len() int {
 	return r.counter
+}
+
+func (r *Resources) Export(dir string) error {
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return err
+	}
+
+	var errs error
+	lists := []runtime.Object{
+		&corev1.NamespaceList{Items: r.Namespaces},
+		&corev1.PodList{Items: r.Pods},
+		&networkingv1alpha3.DestinationRuleList{Items: r.DestinationRules},
+		&networkingv1alpha3.EnvoyFilterList{Items: r.EnvoyFilters},
+		&networkingv1alpha3.GatewayList{Items: r.Gateways},
+		&networkingv1alpha3.ServiceEntryList{Items: r.ServiceEntries},
+		&networkingv1alpha3.VirtualServiceList{Items: r.VirtualServices},
+		&securityv1beta1.AuthorizationPolicyList{Items: r.AuthorizationPolicies},
+		&securityv1beta1.PeerAuthenticationList{Items: r.PeerAuthentications},
+	}
+	for _, list := range lists {
+		err := exportObjects(dir, list)
+		if err != nil {
+			errs = multierror.Append(err)
+		}
+	}
+	return errs
+}
+
+func exportObjects(dir string, obj runtime.Object) (err error) {
+	const mediaType = runtime.ContentTypeYAML
+	info, ok := runtime.SerializerInfoForMediaType(clientsetscheme.Codecs.SupportedMediaTypes(), mediaType)
+	if !ok {
+		return fmt.Errorf("unable to locate encoder -- %q is not a supported media type", mediaType)
+	}
+
+	gvks, ok, err := clientsetscheme.Scheme.ObjectKinds(obj)
+	if err != nil {
+		return err
+	}
+	if len(gvks) == 0 {
+		return fmt.Errorf("unknown gvk for %T", obj)
+	}
+
+	encoder := clientsetscheme.Codecs.EncoderForVersion(info.Serializer, gvks[0].GroupVersion())
+
+	name := strings.TrimSuffix(gvks[0].Kind, "List")
+	filename := filepath.Join(dir, namer.PluralName(name)+".yaml")
+	f, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		ferr := f.Close()
+		if ferr != nil && err == nil {
+			err = ferr
+		}
+	}()
+
+	if err = encoder.Encode(obj, f); err != nil {
+		return err
+	}
+
+	return nil
 }

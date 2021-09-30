@@ -106,6 +106,12 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to load resources: %s", err)
 		}
+	} else {
+		log.Printf("exporting resources")
+		err = resources.Export("export")
+		if err != nil {
+			log.Printf("failed to export resources: %s", err)
+		}
 	}
 
 	var results []types.AuditResult

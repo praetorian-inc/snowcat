@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"time"
 
 	// old imports
 	"context"
@@ -27,7 +28,14 @@ import (
 
 var (
 	// used for flags
-	configFile string
+	configFileFlag       string
+	logLevelFlag         string
+	istioVersionFlag     string
+	istioNamespaceFlag   string
+	discoveryAddressFlag string
+	debugzAddressFlag    string
+	kubeletAddressesFlag []string
+	istiodIPsFlag        []string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -44,22 +52,33 @@ and live clusters`,
 }
 
 func init() {
+	rootCmd.Flags().StringVarP(&configFileFlag, "config", "c", "mithril.yml", "mithril configuration file")
+	rootCmd.Flags().StringVarP(&logLevelFlag, "log-level", "l", "info", "log level, see https://github.com/sirupsen/logrus#level-logging for options.")
+	viper.BindPFlag("log-level", rootCmd.Flags().Lookup("log-level"))
+
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "mithril.yml", "mithril configuration file (default is `./mithril.yml`")
+	rootCmd.Flags().StringVar(&istioVersionFlag, "istio-version", "", "the version of the istio control plane")
+	viper.BindPFlag("istio-version", rootCmd.Flags().Lookup("istio-version"))
+
+	rootCmd.Flags().StringVar(&istioNamespaceFlag, "istio-namespace", "", "the kubernetes namespace of the istio control plane")
+	viper.BindPFlag("istio-namespace", rootCmd.Flags().Lookup("istio-namespace"))
+
+	rootCmd.Flags().StringVar(&discoveryAddressFlag, "discovery-address", "", "ip:port of istiod's unauthenticated xds")
+	viper.BindPFlag("discovery-address", rootCmd.Flags().Lookup("discovery-address"))
+
+	rootCmd.Flags().StringVar(&debugzAddressFlag, "debugz-address", "", "ip:port of istiod's debug api")
+	viper.BindPFlag("debugz-address", rootCmd.Flags().Lookup("debugz-address"))
+
+	rootCmd.Flags().StringSliceVar(&kubeletAddressesFlag, "kubelet-addresses", []string{}, "list of addresses in form host:port of each node's kubelet read-only api")
+	viper.BindPFlag("kubelet-addresses", rootCmd.Flags().Lookup("kubelet-addresses"))
+
+	rootCmd.Flags().StringSliceVar(&istiodIPsFlag, "istiod-ips", []string{}, "list of ip addresses that appear to be the istio control plane")
+	viper.BindPFlag("istiod-ips", rootCmd.Flags().Lookup("istiod-ips"))
 }
 
 func initConfig() {
-	if configFile != "" {
-		viper.SetConfigFile(configFile)
-	} else {
-		// we want to support config directories in pwd
-		viper.AddConfigPath(".")
-
-		// config file name is config.yaml
-		viper.SetConfigName("mithril")
-		viper.SetConfigType("yaml")
-	}
+	viper.SetConfigFile(configFileFlag)
 
 	// read in environment variables that match
 	viper.AutomaticEnv()
@@ -74,6 +93,19 @@ func initConfig() {
 		}
 	}
 
+	level, err := log.ParseLevel(viper.GetString("log-level"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.SetLevel(level)
+
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp: true,
+		// https://tools.ietf.org/html/rfc3339
+		TimestampFormat: time.RFC3339Nano,
+	})
+
 	log.Infof("using config file: %s", viper.ConfigFileUsed())
 }
 
@@ -85,16 +117,29 @@ func Execute() {
 	}
 }
 
+func buildInitialDiscovery() types.Discovery {
+	return types.Discovery{
+		IstioVersion:     viper.GetString("istio-version"),
+		IstioNamespace:   viper.GetString("istio-namespace"),
+		DiscoveryAddress: viper.GetString("discovery-address"),
+		DebugzAddress:    viper.GetString("debugz-address"),
+		KubeletAddresses: viper.GetStringSlice("kubelet-addresses"),
+		IstiodIPs:        viper.GetStringSlice("istiod-ips"),
+	}
+}
+
 func RunMithril() {
 	auditors, err := auditors.New(types.Config{})
 	if err != nil {
 		log.Fatalf("failed to initialize auditors: %s", err)
 	}
 
+	disco := buildInitialDiscovery()
+
 	runners := []runner.Runner{
 		namespace.Runner,
 	}
-	var disco types.Discovery
+
 	for _, r := range runners {
 		log.Printf("running %s runner", r.Name)
 

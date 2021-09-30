@@ -93,8 +93,8 @@ func main() {
 				continue
 			}
 			var res []runtime.Object
-			for _, pod := range pods {
-				res = append(res, &pod)
+			for i := range pods {
+				res = append(res, &pods[i])
 			}
 			resources.Load(res)
 		}

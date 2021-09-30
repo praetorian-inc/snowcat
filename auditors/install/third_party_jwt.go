@@ -1,7 +1,7 @@
 package install
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/praetorian-inc/mithril/auditors"
 	"github.com/praetorian-inc/mithril/pkg/types"

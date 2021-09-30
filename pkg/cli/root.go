@@ -1,27 +1,24 @@
 package cli
 
 import (
+	"errors"
+	"fmt"
+	"os"
+	"time"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"time"
 
 	// old imports
-	"context"
-	"fmt"
-
 	"github.com/fatih/color"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/praetorian-inc/mithril/auditors"
-	"github.com/praetorian-inc/mithril/pkg/debugz"
-	kubeletclient "github.com/praetorian-inc/mithril/pkg/kubelet"
 	"github.com/praetorian-inc/mithril/pkg/runner"
 	"github.com/praetorian-inc/mithril/pkg/runner/istiod"
 	"github.com/praetorian-inc/mithril/pkg/runner/kubelet"
 	"github.com/praetorian-inc/mithril/pkg/runner/namespace"
 	"github.com/praetorian-inc/mithril/pkg/types"
-	"github.com/praetorian-inc/mithril/pkg/xds"
 
 	_ "github.com/praetorian-inc/mithril/auditors/auth"
 	_ "github.com/praetorian-inc/mithril/auditors/authz"
@@ -35,6 +32,8 @@ var (
 	// used for flags
 	configFileFlag       string
 	logLevelFlag         string
+	inputDirectoryFlag   string
+	exportDirectoryFlag  string
 	istioVersionFlag     string
 	istioNamespaceFlag   string
 	discoveryAddressFlag string
@@ -52,8 +51,26 @@ var rootCmd = &cobra.Command{
 istio service mesh, or by a security engineer looking to evaluate a customer's mesh.
 it is capable of operating in a few different modes, including configuration files
 and live clusters`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) > 1 {
+			return errors.New("too many arguments specified")
+		}
+		if len(args) == 0 {
+			return nil
+		}
+
+		path := args[0]
+		stat, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("invalid input directory: %s", err)
+		}
+		if !stat.IsDir() {
+			return fmt.Errorf("invalid input: %s must be a directory", path)
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		RunMithril()
+		RunMithril(args)
 	},
 }
 
@@ -63,6 +80,9 @@ func init() {
 	viper.BindPFlag("log-level", rootCmd.Flags().Lookup("log-level"))
 
 	cobra.OnInitialize(initConfig)
+
+	rootCmd.Flags().StringVar(&inputDirectoryFlag, "input", "", "the input directory of static yaml files to scan")
+	rootCmd.Flags().StringVar(&exportDirectoryFlag, "export", "", "write discovered resources to the specified export directory as yaml")
 
 	rootCmd.Flags().StringVar(&istioVersionFlag, "istio-version", "", "the version of the istio control plane")
 	viper.BindPFlag("istio-version", rootCmd.Flags().Lookup("istio-version"))
@@ -83,7 +103,6 @@ func init() {
 	viper.BindPFlag("istiod-ips", rootCmd.Flags().Lookup("istiod-ips"))
 
 	rootCmd.Flags().BoolVarP(&saveConfFlag, "save-config", "s", false, "whether or not to save discovery to current config file")
-	viper.BindPFlag("save-config", rootCmd.Flags().Lookup("save-config"))
 }
 
 func initConfig() {
@@ -96,7 +115,9 @@ func initConfig() {
 	err := viper.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			log.Fatal("configuration file not found")
+			log.Info("configuration file not found")
+		} else if os.IsNotExist(err) {
+			log.Info("configuration file not found")
 		} else {
 			log.Fatalf("issue reading configuration file: %s", err)
 		}
@@ -146,90 +167,43 @@ func saveFinalDiscovery(disco types.Discovery) {
 	viper.Set("istiod-ips", disco.IstiodIPs)
 }
 
-func RunMithril() {
+func RunMithril(args []string) {
+	var inputPath string
+	if len(args) == 1 {
+		inputPath = args[0]
+	}
+
 	auditors, err := auditors.New(types.Config{})
 	if err != nil {
 		log.Fatalf("failed to initialize auditors: %s", err)
 	}
 
 	disco := buildInitialDiscovery()
-
-	// Runners are executed in a specific order to resolve dependencies
-	// correctly. Reordering this list may result in failed discovery.
-	runners := []runner.Runner{
-		kubelet.Runner,
-		namespace.Runner,
-		istiod.Runner,
-	}
-	for _, r := range runners {
-		log.Printf("running %s runner", r.Name)
-
-		err := r.Run(&disco)
-		if err != nil {
-			log.Printf("failed to run %s: %s", r.Name, err)
-		}
-	}
-
-	ctx := context.Background()
 	resources := types.NewResources()
-	if disco.DiscoveryAddress != "" {
-		log.Printf("querying xds at %s", disco.DiscoveryAddress)
-		cli, err := xds.NewClient(disco.DiscoveryAddress)
-		if err != nil {
-			log.Printf("failed to initialize xds client: %s", err)
+
+	if inputPath == "" {
+		// Runners are executed in a specific order to resolve dependencies
+		// correctly. Reordering this list may result in failed discovery.
+		runners := runner.Runners{
+			kubelet.Runner,
+			namespace.Runner,
+			istiod.Runner,
 		}
-		res, err := cli.Resources(ctx)
+		runners.Run(&disco, &resources)
+	} else {
+		err = resources.LoadFromDirectory(inputPath)
 		if err != nil {
-			log.Printf("failed to query xds resources: %s", err)
-		}
-		resources.Load(res)
-		disco.IstioVersion, err = cli.Version(ctx)
-		if err != nil {
-			log.Printf("failed to query versions via xds resources: %s", err)
-		}
-		cli.Close()
-	}
-	if disco.DebugzAddress != "" {
-		log.Printf("querying debug API at %s", disco.DebugzAddress)
-		cli, err := debugz.NewClient(disco.DebugzAddress)
-		if err != nil {
-			log.Printf("failed to initialize debugz client: %s", err)
-		}
-		res, err := cli.Resources(ctx)
-		if err != nil {
-			log.Printf("failed to query debugz resources: %s", err)
-		}
-		disco.IstioVersion, err = cli.Version(ctx)
-		if err != nil {
-			log.Printf("failed to query versions via debugz resources: %s", err)
-		}
-		resources.Load(res)
-	}
-	if len(disco.KubeletAddresses) > 0 {
-		for _, addr := range disco.KubeletAddresses {
-			cli, err := kubeletclient.NewClient(addr)
-			pods, err := cli.Pods(ctx)
-			if err != nil {
-				log.Printf("failed to query pods from kubelet: %s", err)
-				continue
-			}
-			var res []runtime.Object
-			for i := range pods {
-				res = append(res, &pods[i])
-			}
-			resources.Load(res)
+			log.Fatalf("failed to load resources: %s", err)
 		}
 	}
 
 	if resources.Len() == 0 {
-		// TODO: import from static dir
-		err = resources.LoadFromDirectory("_fixtures")
-		if err != nil {
-			log.Fatalf("failed to load resources: %s", err)
-		}
-	} else {
-		log.Printf("exporting resources")
-		err = resources.Export("export")
+		log.Fatalf("failed to discovery any resources")
+	}
+
+	if exportDirectoryFlag != "" {
+		log.Printf("exporting resources to %s", exportDirectoryFlag)
+		err = resources.Export(exportDirectoryFlag)
 		if err != nil {
 			log.Printf("failed to export resources: %s", err)
 		}
@@ -252,7 +226,7 @@ func RunMithril() {
 		fmt.Printf("%s [%s]: %s\n", red(res.Name), yellow(res.Resource), res.Description)
 	}
 
-	if save := viper.GetBool("save-config"); save {
+	if saveConfFlag {
 		saveFinalDiscovery(disco)
 
 		log.Info("saving configuration file based on new discoveries")

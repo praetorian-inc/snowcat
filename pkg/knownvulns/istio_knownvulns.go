@@ -1,8 +1,8 @@
 package knownvulns
 
 import (
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"log"
 )
 
 const ScrapedCveYamlData = `

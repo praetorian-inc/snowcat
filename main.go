@@ -50,7 +50,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	var resources types.Resources
+	resources := types.NewResources()
 	if disco.DiscoveryAddress != "" {
 		log.Printf("querying xds at %s", disco.DiscoveryAddress)
 		cli, err := xds.NewClient(disco.DiscoveryAddress)
@@ -94,7 +94,10 @@ func main() {
 
 	if resources.Len() == 0 {
 		// TODO: import from static dir
-		log.Fatalf("no resources discovered")
+		err = resources.LoadFromDirectory("_fixtures")
+		if err != nil {
+			log.Fatalf("failed to load resources: %s", err)
+		}
 	}
 
 	var results []types.AuditResult

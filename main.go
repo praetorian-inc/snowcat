@@ -120,7 +120,8 @@ func main() {
 	}
 
 	red := color.New(color.FgRed).SprintFunc()
+	yellow := color.New(color.FgYellow).SprintFunc()
 	for _, res := range results {
-		fmt.Printf("%s: %s\n", red(res.Name), res.Description)
+		fmt.Printf("%s [%s]: %s\n", red(res.Name), yellow(res.Resource), res.Description)
 	}
 }

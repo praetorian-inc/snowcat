@@ -38,6 +38,7 @@ type AuditResult struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Severity    Severity `json:"severity"`
+	Resource    string   `json:"resource"`
 }
 
 type Severity int

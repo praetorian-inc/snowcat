@@ -36,6 +36,7 @@ func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.A
 			if offendingRules != nil {
 				results = append(results, types.AuditResult{
 					Name:        a.Name(),
+					Resource:    policy.Namespace + ":" + policy.Name,
 					Description: fmt.Sprintf("discovered allow policy with negative matchers in %s", policy.Name),
 				})
 			}
@@ -45,6 +46,7 @@ func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.A
 			if offendingRules != nil {
 				results = append(results, types.AuditResult{
 					Name:        a.Name(),
+					Resource:    policy.Namespace + ":" + policy.Name,
 					Description: fmt.Sprintf("discovered deny policy with positive matchers in %s", policy.Name),
 				})
 			}

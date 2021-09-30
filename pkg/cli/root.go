@@ -39,7 +39,6 @@ var (
 	discoveryAddressFlag string
 	debugzAddressFlag    string
 	kubeletAddressesFlag []string
-	istiodIPsFlag        []string
 	saveConfFlag         bool
 )
 
@@ -99,9 +98,6 @@ func init() {
 	rootCmd.Flags().StringSliceVar(&kubeletAddressesFlag, "kubelet-addresses", []string{}, "list of addresses in form host:port of each node's kubelet read-only api")
 	viper.BindPFlag("kubelet-addresses", rootCmd.Flags().Lookup("kubelet-addresses"))
 
-	rootCmd.Flags().StringSliceVar(&istiodIPsFlag, "istiod-ips", []string{}, "list of ip addresses that appear to be the istio control plane")
-	viper.BindPFlag("istiod-ips", rootCmd.Flags().Lookup("istiod-ips"))
-
 	rootCmd.Flags().BoolVarP(&saveConfFlag, "save-config", "s", false, "whether or not to save discovery to current config file")
 }
 
@@ -154,7 +150,6 @@ func buildInitialDiscovery() types.Discovery {
 		DiscoveryAddress: viper.GetString("discovery-address"),
 		DebugzAddress:    viper.GetString("debugz-address"),
 		KubeletAddresses: viper.GetStringSlice("kubelet-addresses"),
-		IstiodIPs:        viper.GetStringSlice("istiod-ips"),
 	}
 }
 
@@ -164,7 +159,6 @@ func saveFinalDiscovery(disco types.Discovery) {
 	viper.Set("discovery-address", disco.DiscoveryAddress)
 	viper.Set("debugz-address", disco.DebugzAddress)
 	viper.Set("kubelet-addresses", disco.KubeletAddresses)
-	viper.Set("istiod-ips", disco.IstiodIPs)
 }
 
 func RunMithril(args []string) {

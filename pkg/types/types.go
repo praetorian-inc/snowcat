@@ -70,8 +70,6 @@ type Discovery struct {
 	// KubeletAddresses is a list of addresses of each node's kubelet read-only API.
 	// These addresses have the form "host:port".
 	KubeletAddresses []string
-	// IstiodIPs is a list of IP addresses of that appear to be the istio control plane.
-	IstiodIPs []string
 }
 
 type ObjectGetter interface {

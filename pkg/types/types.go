@@ -1,17 +1,22 @@
 package types
 
 import (
+	"bytes"
 	"context"
 	"io"
+	"io/fs"
 	"log"
+	"os"
 
 	networking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security "istio.io/client-go/pkg/apis/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
 	operator "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
 type Config struct {
@@ -70,14 +75,24 @@ type ObjectGetter interface {
 
 type Resources struct {
 	counter int
+	decoder runtime.Decoder
 
 	Namespaces            []corev1.Namespace
+	Pods                  []corev1.Pod
 	PeerAuthentications   []securityv1beta1.PeerAuthentication
 	AuthorizationPolicies []securityv1beta1.AuthorizationPolicy
 	DestinationRules      []networkingv1alpha3.DestinationRule
 	Gateways              []networkingv1alpha3.Gateway
 	VirtualServices       []networkingv1alpha3.VirtualService
 	Filters               []networkingv1alpha3.EnvoyFilter
+	ServiceEntries        []networkingv1alpha3.ServiceEntry
+}
+
+func NewResources() Resources {
+	istioscheme.AddToScheme(clientsetscheme.Scheme)
+	return Resources{
+		decoder: clientsetscheme.Codecs.UniversalDeserializer(),
+	}
 }
 
 func (r *Resources) Load(resources []runtime.Object) error {
@@ -101,6 +116,12 @@ func (r *Resources) Load(resources []runtime.Object) error {
 		case *networkingv1alpha3.VirtualService:
 			r.VirtualServices = append(r.VirtualServices, *obj)
 			r.counter++
+		case *networkingv1alpha3.ServiceEntry:
+			r.ServiceEntries = append(r.ServiceEntries, *obj)
+			r.counter++
+		case *corev1.Pod:
+			r.Pods = append(r.Pods, *obj)
+			r.counter++
 		case *corev1.Namespace:
 			r.Namespaces = append(r.Namespaces, *obj)
 			r.counter++
@@ -109,6 +130,40 @@ func (r *Resources) Load(resources []runtime.Object) error {
 		}
 	}
 	return nil
+}
+
+func (r *Resources) LoadFromDirectory(dir string) error {
+	root := os.DirFS(dir)
+
+	return fs.WalkDir(root, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		data, err := fs.ReadFile(root, path)
+		if err != nil {
+			return err
+		}
+		return r.load(data)
+	})
+}
+
+func (r *Resources) load(data []byte) error {
+	var resources []runtime.Object
+	for _, yaml := range bytes.Split(data, []byte("---")) {
+		if len(yaml) == 0 {
+			continue
+		}
+		obj, _, err := r.decoder.Decode(yaml, nil, nil)
+		if err != nil {
+			return err
+		}
+
+		resources = append(resources, obj)
+	}
+	return r.Load(resources)
 }
 
 func (r *Resources) Len() int {

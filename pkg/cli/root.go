@@ -11,10 +11,14 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/praetorian-inc/mithril/auditors"
 	"github.com/praetorian-inc/mithril/pkg/debugz"
+	kubeletclient "github.com/praetorian-inc/mithril/pkg/kubelet"
 	"github.com/praetorian-inc/mithril/pkg/runner"
+	"github.com/praetorian-inc/mithril/pkg/runner/istiod"
+	"github.com/praetorian-inc/mithril/pkg/runner/kubelet"
 	"github.com/praetorian-inc/mithril/pkg/runner/namespace"
 	"github.com/praetorian-inc/mithril/pkg/types"
 	"github.com/praetorian-inc/mithril/pkg/xds"
@@ -23,6 +27,7 @@ import (
 	_ "github.com/praetorian-inc/mithril/auditors/authz"
 	_ "github.com/praetorian-inc/mithril/auditors/destinationrule"
 	_ "github.com/praetorian-inc/mithril/auditors/gateway"
+	_ "github.com/praetorian-inc/mithril/auditors/install"
 	_ "github.com/praetorian-inc/mithril/auditors/version"
 )
 
@@ -36,6 +41,7 @@ var (
 	debugzAddressFlag    string
 	kubeletAddressesFlag []string
 	istiodIPsFlag        []string
+	saveConfFlag         bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -75,6 +81,9 @@ func init() {
 
 	rootCmd.Flags().StringSliceVar(&istiodIPsFlag, "istiod-ips", []string{}, "list of ip addresses that appear to be the istio control plane")
 	viper.BindPFlag("istiod-ips", rootCmd.Flags().Lookup("istiod-ips"))
+
+	rootCmd.Flags().BoolVarP(&saveConfFlag, "save-config", "s", false, "whether or not to save discovery to current config file")
+	viper.BindPFlag("save-config", rootCmd.Flags().Lookup("save-config"))
 }
 
 func initConfig() {
@@ -136,10 +145,13 @@ func RunMithril() {
 
 	disco := buildInitialDiscovery()
 
+	// Runners are executed in a specific order to resolve dependencies
+	// correctly. Reordering this list may result in failed discovery.
 	runners := []runner.Runner{
+		kubelet.Runner,
 		namespace.Runner,
+		istiod.Runner,
 	}
-
 	for _, r := range runners {
 		log.Printf("running %s runner", r.Name)
 
@@ -150,8 +162,9 @@ func RunMithril() {
 	}
 
 	ctx := context.Background()
-	var resources types.Resources
+	resources := types.NewResources()
 	if disco.DiscoveryAddress != "" {
+		log.Printf("querying xds at %s", disco.DiscoveryAddress)
 		cli, err := xds.NewClient(disco.DiscoveryAddress)
 		if err != nil {
 			log.Printf("failed to initialize xds client: %s", err)
@@ -161,9 +174,14 @@ func RunMithril() {
 			log.Printf("failed to query xds resources: %s", err)
 		}
 		resources.Load(res)
+		disco.IstioVersion, err = cli.Version(ctx)
+		if err != nil {
+			log.Printf("failed to query versions via xds resources: %s", err)
+		}
 		cli.Close()
 	}
 	if disco.DebugzAddress != "" {
+		log.Printf("querying debug API at %s", disco.DebugzAddress)
 		cli, err := debugz.NewClient(disco.DebugzAddress)
 		if err != nil {
 			log.Printf("failed to initialize debugz client: %s", err)
@@ -172,12 +190,40 @@ func RunMithril() {
 		if err != nil {
 			log.Printf("failed to query debugz resources: %s", err)
 		}
+		disco.IstioVersion, err = cli.Version(ctx)
+		if err != nil {
+			log.Printf("failed to query versions via debugz resources: %s", err)
+		}
 		resources.Load(res)
+	}
+	if len(disco.KubeletAddresses) > 0 {
+		for _, addr := range disco.KubeletAddresses {
+			cli, err := kubeletclient.NewClient(addr)
+			pods, err := cli.Pods(ctx)
+			if err != nil {
+				log.Printf("failed to query pods from kubelet: %s", err)
+				continue
+			}
+			var res []runtime.Object
+			for i := range pods {
+				res = append(res, &pods[i])
+			}
+			resources.Load(res)
+		}
 	}
 
 	if resources.Len() == 0 {
 		// TODO: import from static dir
-		log.Fatalf("no resources discovered")
+		err = resources.LoadFromDirectory("_fixtures")
+		if err != nil {
+			log.Fatalf("failed to load resources: %s", err)
+		}
+	} else {
+		log.Printf("exporting resources")
+		err = resources.Export("export")
+		if err != nil {
+			log.Printf("failed to export resources: %s", err)
+		}
 	}
 
 	var results []types.AuditResult
@@ -192,7 +238,17 @@ func RunMithril() {
 	}
 
 	red := color.New(color.FgRed).SprintFunc()
+	yellow := color.New(color.FgYellow).SprintFunc()
 	for _, res := range results {
-		fmt.Printf("%s: %s\n", red(res.Name), res.Description)
+		fmt.Printf("%s [%s]: %s\n", red(res.Name), yellow(res.Resource), res.Description)
+	}
+
+	if save := viper.GetBool("save-config"); save {
+		log.Info("saving configuration file based on new discoveries")
+
+		err := viper.WriteConfig()
+		if err != nil {
+			log.Errorf("could not save configuration: %s", err)
+		}
 	}
 }

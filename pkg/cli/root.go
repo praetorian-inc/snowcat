@@ -137,6 +137,15 @@ func buildInitialDiscovery() types.Discovery {
 	}
 }
 
+func saveFinalDiscovery(disco types.Discovery) {
+	viper.Set("istio-version", disco.IstioVersion)
+	viper.Set("istio-namespace", disco.IstioNamespace)
+	viper.Set("discovery-address", disco.DiscoveryAddress)
+	viper.Set("debugz-address", disco.DebugzAddress)
+	viper.Set("kubelet-addresses", disco.KubeletAddresses)
+	viper.Set("istiod-ips", disco.IstiodIPs)
+}
+
 func RunMithril() {
 	auditors, err := auditors.New(types.Config{})
 	if err != nil {
@@ -244,6 +253,8 @@ func RunMithril() {
 	}
 
 	if save := viper.GetBool("save-config"); save {
+		saveFinalDiscovery(disco)
+
 		log.Info("saving configuration file based on new discoveries")
 
 		err := viper.WriteConfig()

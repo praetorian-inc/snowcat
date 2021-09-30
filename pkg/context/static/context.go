@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 
-	"github.com/praetorian-inc/mithril/pkg/context"
 	"github.com/praetorian-inc/mithril/pkg/types"
 )
 
@@ -23,7 +22,7 @@ type StaticIstioContext struct {
 	root    string
 	decoder runtime.Decoder
 
-	resources *context.Resources
+	resources *types.Resources
 }
 
 // New creates a new static IstioContext using yaml files from the provided directory.
@@ -36,7 +35,7 @@ func New(directory string) (types.IstioContext, error) {
 	ctx := &StaticIstioContext{
 		root:      directory,
 		decoder:   clientsetscheme.Codecs.UniversalDeserializer(),
-		resources: &context.Resources{},
+		resources: &types.Resources{},
 	}
 	return ctx, ctx.loadAll()
 }

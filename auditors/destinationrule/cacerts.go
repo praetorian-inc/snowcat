@@ -31,6 +31,7 @@ func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.A
 		if !isClientTLSSettingSafe(rule.Spec.TrafficPolicy.Tls) {
 			results = append(results, types.AuditResult{
 				Name:        a.Name(),
+				Resource:    rule.Namespace + ":" + rule.Name,
 				Description: fmt.Sprintf("%s rule missing CA certificates", rule.Name),
 			})
 		}
@@ -38,6 +39,7 @@ func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.A
 			if !isClientTLSSettingSafe(policy.Tls) {
 				results = append(results, types.AuditResult{
 					Name:        a.Name(),
+					Resource:    rule.Namespace + ":" + rule.Name,
 					Description: fmt.Sprintf("%s rule missing CA certificates in traffic policy", rule.Name),
 				})
 			}

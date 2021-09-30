@@ -26,6 +26,7 @@ func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.A
 				if host == "*" {
 					results = append(results, types.AuditResult{
 						Name:        a.Name(),
+						Resource:    gateway.Namespace + ":" + gateway.Name,
 						Description: fmt.Sprintf("%s host gateway is too broad (wildcard host allowed)", gateway.Spec.Selector["istio"]),
 					})
 				}

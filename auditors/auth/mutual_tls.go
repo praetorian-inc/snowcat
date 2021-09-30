@@ -35,6 +35,7 @@ func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.A
 		if !safe {
 			results = append(results, types.AuditResult{
 				Name:        a.Name(),
+				Resource:    ns,
 				Description: fmt.Sprintf("%s namespace missing PeerAuthentication policy", ns),
 			})
 		}

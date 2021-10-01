@@ -13,7 +13,7 @@ type tcpScanner struct{}
 func (s *tcpScanner) Scan(target string, timeout time.Duration) bool {
 	log.WithFields(log.Fields{
 		"addr": target,
-	}).Debug("dialing tcp address for port scan")
+	}).Trace("dialing tcp address for port scan")
 
 	conn, err := net.DialTimeout("tcp", target, timeout)
 

@@ -142,12 +142,12 @@ func (xds *xdsClient) send(ctx context.Context, req *discovery.DiscoveryRequest)
 	if req.TypeUrl == "" {
 		log.WithFields(log.Fields{
 			"addr": xds.discoveryAddr,
-		}).Debug("sending xds version request")
+		}).Trace("sending xds version request")
 	} else {
 		log.WithFields(log.Fields{
 			"addr":    xds.discoveryAddr,
 			"typeURL": req.TypeUrl,
-		}).Debug("sending xds request")
+		}).Trace("sending xds request")
 	}
 
 	err := xds.stream.Send(req)

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jackpal/gateway"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/praetorian-inc/mithril/pkg/kubelet"
 	"github.com/praetorian-inc/mithril/pkg/netscan"
@@ -33,10 +34,16 @@ func (s *DefaultGatewayStrategy) Name() string {
 func (s *DefaultGatewayStrategy) Run(input *types.Discovery) error {
 	var hosts []string
 
+	log.Info("attempting to locate default gateway")
+
 	gateway, err := gateway.DiscoverGateway()
 	if err != nil {
 		return err
 	}
+
+	log.WithFields(log.Fields{
+		"gateway": gateway.String(),
+	}).Info("discovered default gateway")
 
 	if ip4 := gateway.To4(); ip4 != nil {
 		for i := 0; i < 256; i++ {
@@ -44,6 +51,8 @@ func (s *DefaultGatewayStrategy) Run(input *types.Discovery) error {
 			hosts = append(hosts, ip.String())
 		}
 	}
+
+	log.Info("scanning for additional potential gateways using HTTP scanner")
 
 	scanner, err := netscan.New(netscan.ModeHTTP, hosts, []string{"10255"})
 	if err != nil {
@@ -54,9 +63,17 @@ func (s *DefaultGatewayStrategy) Run(input *types.Discovery) error {
 
 	for addr := range scanner.Scan(500 * time.Millisecond) {
 		if verifyKubeletAPI(addr) {
+			log.WithFields(log.Fields{
+				"addr": addr,
+			}).Debug("discovered kubelet api")
+
 			results = append(results, addr)
 		}
 	}
+
+	log.WithFields(log.Fields{
+		"kubeletAddresses": results,
+	}).Debug("resulting kubelet apis")
 
 	input.KubeletAddresses = results
 	return nil

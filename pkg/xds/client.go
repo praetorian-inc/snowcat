@@ -139,9 +139,16 @@ func (xds *xdsClient) send(ctx context.Context, req *discovery.DiscoveryRequest)
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"typeURL": req.TypeUrl,
-	}).Debug("sending xds request")
+	if req.TypeUrl == "" {
+		log.WithFields(log.Fields{
+			"addr": xds.discoveryAddr,
+		}).Debug("sending xds version request")
+	} else {
+		log.WithFields(log.Fields{
+			"addr":    xds.discoveryAddr,
+			"typeURL": req.TypeUrl,
+		}).Debug("sending xds request")
+	}
 
 	err := xds.stream.Send(req)
 	if err != nil {

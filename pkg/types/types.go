@@ -18,6 +18,7 @@ import (
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
 	operator "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 
@@ -81,6 +82,7 @@ type ObjectGetter interface {
 type Resources struct {
 	counter int
 	decoder runtime.Decoder
+	seen    map[string]struct{}
 
 	Namespaces            []corev1.Namespace
 	Pods                  []corev1.Pod
@@ -97,39 +99,74 @@ func NewResources() Resources {
 	istioscheme.AddToScheme(clientsetscheme.Scheme)
 	return Resources{
 		decoder: clientsetscheme.Codecs.UniversalDeserializer(),
+		seen:    make(map[string]struct{}),
 	}
+}
+
+func (r *Resources) addIfNotExists(obj runtime.Object, meta metav1.ObjectMeta, add func()) {
+	gk := obj.GetObjectKind().GroupVersionKind().GroupKind()
+
+	var key string
+	if meta.Namespace == "" {
+		key = fmt.Sprintf("%s:%s:%s", gk.Group, gk.Kind, meta.Name)
+	} else {
+		key = fmt.Sprintf("%s:%s:%s:%s", gk.Group, gk.Kind, meta.Namespace, meta.Name)
+	}
+
+	if _, ok := r.seen[key]; ok {
+		return
+	}
+
+	// NOTE: this creates namespaces as we observe them, but without any labels or annotations
+	if meta.Namespace != "" {
+		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: meta.Namespace}}
+		r.addIfNotExists(ns, ns.ObjectMeta, func() { r.Namespaces = append(r.Namespaces, *ns) })
+	}
+
+	add()
+	r.seen[key] = struct{}{}
+	r.counter++
 }
 
 func (r *Resources) Load(resources []runtime.Object) error {
 	for _, resource := range resources {
 		switch obj := resource.(type) {
 		case *securityv1beta1.PeerAuthentication:
-			r.PeerAuthentications = append(r.PeerAuthentications, *obj)
-			r.counter++
+			r.addIfNotExists(resource, obj.ObjectMeta, func() {
+				r.PeerAuthentications = append(r.PeerAuthentications, *obj)
+			})
 		case *securityv1beta1.AuthorizationPolicy:
-			r.AuthorizationPolicies = append(r.AuthorizationPolicies, *obj)
-			r.counter++
+			r.addIfNotExists(resource, obj.ObjectMeta, func() {
+				r.AuthorizationPolicies = append(r.AuthorizationPolicies, *obj)
+			})
 		case *networkingv1alpha3.DestinationRule:
-			r.DestinationRules = append(r.DestinationRules, *obj)
-			r.counter++
+			r.addIfNotExists(resource, obj.ObjectMeta, func() {
+				r.DestinationRules = append(r.DestinationRules, *obj)
+			})
 		case *networkingv1alpha3.Gateway:
-			r.Gateways = append(r.Gateways, *obj)
-			r.counter++
+			r.addIfNotExists(resource, obj.ObjectMeta, func() {
+				r.Gateways = append(r.Gateways, *obj)
+			})
 		case *networkingv1alpha3.EnvoyFilter:
-			r.EnvoyFilters = append(r.EnvoyFilters, *obj)
-			r.counter++
+			r.addIfNotExists(resource, obj.ObjectMeta, func() {
+				r.EnvoyFilters = append(r.EnvoyFilters, *obj)
+			})
 		case *networkingv1alpha3.VirtualService:
-			r.VirtualServices = append(r.VirtualServices, *obj)
-			r.counter++
+			r.addIfNotExists(resource, obj.ObjectMeta, func() {
+				r.VirtualServices = append(r.VirtualServices, *obj)
+			})
 		case *networkingv1alpha3.ServiceEntry:
-			r.ServiceEntries = append(r.ServiceEntries, *obj)
-			r.counter++
+			r.addIfNotExists(resource, obj.ObjectMeta, func() {
+				r.ServiceEntries = append(r.ServiceEntries, *obj)
+			})
 		case *corev1.Pod:
-			r.Pods = append(r.Pods, *obj)
-			r.counter++
+			r.addIfNotExists(resource, obj.ObjectMeta, func() {
+				r.Pods = append(r.Pods, *obj)
+			})
 		case *corev1.Namespace:
-			r.Namespaces = append(r.Namespaces, *obj)
-			r.counter++
+			r.addIfNotExists(resource, obj.ObjectMeta, func() {
+				r.Namespaces = append(r.Namespaces, *obj)
+			})
 		default:
 			log.Printf("unknown resource %T", obj)
 		}

@@ -245,7 +245,7 @@ func exportObjects(dir string, obj runtime.Object) (err error) {
 		return fmt.Errorf("unable to locate encoder -- %q is not a supported media type", mediaType)
 	}
 
-	gvks, ok, err := clientsetscheme.Scheme.ObjectKinds(obj)
+	gvks, _, err := clientsetscheme.Scheme.ObjectKinds(obj)
 	if err != nil {
 		return err
 	}

@@ -39,19 +39,6 @@ import (
 	blockinggrpc "github.com/praetorian-inc/mithril/pkg/grpc"
 )
 
-var (
-	// From: https://github.com/kubernetes/apimachinery/blob/v0.22.2/pkg/runtime/serializer/protobuf/protobuf.go#L44
-	// protoEncodingPrefix serves as a magic number for an encoded protobuf message on this serializer. All
-	// proto messages serialized by this schema will be preceded by the bytes 0x6b 0x38 0x73, with the fourth
-	// byte being reserved for the encoding style. The only encoding style defined is 0x00, which means that
-	// the rest of the byte stream is a message of type k8s.io.kubernetes.pkg.runtime.Unknown (proto2).
-	//
-	// See k8s.io/apimachinery/pkg/runtime/generated.proto for details of the runtime.Unknown message.
-	//
-	// This encoding scheme is experimental, and is subject to change at any time.
-	protoEncodingPrefix = []byte{0x6b, 0x38, 0x73, 0x00}
-)
-
 type DiscoveryClient interface {
 	Version(ctx context.Context) (string, error)
 	List(ctx context.Context, gvk schema.GroupVersionKind) ([]runtime.Object, error)

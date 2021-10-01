@@ -16,9 +16,8 @@ func (s *tcpScanner) Scan(target string, timeout time.Duration) bool {
 		if strings.Contains(err.Error(), "too many open files") {
 			time.Sleep(timeout)
 			return s.Scan(target, timeout)
-		} else {
-			return false
 		}
+		return false
 	}
 
 	conn.Close()

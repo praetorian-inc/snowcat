@@ -51,6 +51,11 @@ func (s *httpScanner) Scan(addr string, timeout time.Duration) bool {
 		log.Printf("invalid url: %s", err)
 	}
 
+	log.WithFields(log.Fields{
+		"method": req.Method,
+		"url":    req.URL.String(),
+	}).Debug("sending HTTP request for port scan")
+
 	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return false

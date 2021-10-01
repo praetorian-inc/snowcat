@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
@@ -50,6 +51,11 @@ func (c *debugzClient) verify() error {
 	}
 	req = req.WithContext(ctx)
 
+	log.WithFields(log.Fields{
+		"method": req.Method,
+		"url":    req.URL.String(),
+	}).Debug("validating debug API with HTTP request")
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
@@ -71,6 +77,11 @@ func (c *debugzClient) Resources(ctx context.Context) ([]runtime.Object, error) 
 		return nil, err
 	}
 	req = req.WithContext(ctx)
+
+	log.WithFields(log.Fields{
+		"method": req.Method,
+		"url":    req.URL.String(),
+	}).Debug("sending HTTP request to debug API")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -111,6 +122,12 @@ func (c *debugzClient) Version(ctx context.Context) (string, error) {
 		return "", err
 	}
 	req = req.WithContext(ctx)
+
+	log.WithFields(log.Fields{
+		"method": req.Method,
+		"url":    req.URL.String(),
+	}).Debug("sending HTTP request to debug API")
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", err

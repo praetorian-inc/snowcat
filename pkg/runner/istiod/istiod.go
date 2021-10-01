@@ -3,8 +3,8 @@ package istiod
 import (
 	"context"
 	"fmt"
-	"log"
 
+	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/praetorian-inc/mithril/pkg/debugz"
@@ -131,10 +131,10 @@ func (s *IstiodStrategy) Run(input *types.Discovery) error {
 	}
 	addr := fmt.Sprintf("istiod.%s.svc.cluster.local", input.IstioNamespace)
 	if hasDiscoveryService(addr) {
-		input.DiscoveryAddress = addr
+		input.DiscoveryAddress = addr + ":15010"
 	}
 	if hasDebugService(addr) {
-		input.DebugzAddress = addr
+		input.DebugzAddress = addr + ":8080"
 	}
 	return nil
 }
@@ -151,10 +151,10 @@ func (s *IstioPilotStrategy) Run(input *types.Discovery) error {
 	}
 	addr := fmt.Sprintf("istio-pilot.%s.svc.cluster.local", input.IstioNamespace)
 	if hasDiscoveryService(addr) {
-		input.DiscoveryAddress = addr
+		input.DiscoveryAddress = addr + ":15010"
 	}
 	if hasDebugService(addr) {
-		input.DebugzAddress = addr
+		input.DebugzAddress = addr + ":8080"
 	}
 	return nil
 }

@@ -82,7 +82,6 @@ func (runners Runners) Run(disco *types.Discovery, resources *types.Resources) {
 		cli.Close()
 	}
 	if disco.DebugzAddress != "" {
-		log.Printf("querying debug API at %s", disco.DebugzAddress)
 		cli, err := debugz.NewClient(disco.DebugzAddress)
 		if err != nil {
 			log.WithFields(log.Fields{

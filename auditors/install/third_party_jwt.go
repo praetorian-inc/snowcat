@@ -47,10 +47,15 @@ func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.A
 	}
 
 	if !foundSidecar {
-		log.Printf("no istio sidecars found")
+		log.Warn("no istio sidecars found")
 	}
 
 	if foundSidecar && policy != "third-party-jwt" {
+		log.WithFields(log.Fields{
+			"auditor": a.Name(),
+			"policy":  policy,
+		}).Info("found jwt policy")
+
 		results = append(results, types.AuditResult{
 			Name:        "Weak Service Account Authentication",
 			Description: "JWT policy not set to third-party-jwt",

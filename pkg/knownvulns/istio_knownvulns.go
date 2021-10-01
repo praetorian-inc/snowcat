@@ -295,7 +295,7 @@ func GetIstioCVEData() []IstioCVEData {
 func GetVulnsForVersion(version string) ([]IstioCVEData, error) {
 	vulnData := GetIstioCVEData()
 	results := []IstioCVEData{}
-	versionNum, err := convert_string_to_number(version)
+	versionNum, err := convertStringToNumber(version)
 	if err != nil {
 		return nil, err
 	}

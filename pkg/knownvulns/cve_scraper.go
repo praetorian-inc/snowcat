@@ -21,16 +21,16 @@ func (vr *VersionRange) MatchesVersion(version uint64) bool {
 
 type IstioCVEData struct {
 	AffectedVersions []VersionRange
-	DisclosureId     string
-	DisclosureUrl    string
+	DisclosureID     string
+	DisclosureURL    string
 	DisclosureDate   string
 	ImpactScore      string
 	RelatedString    string
 }
 
-const BulletinUrl string = "https://istio.io/latest/news/security/"
+const BulletinURL string = "https://istio.io/latest/news/security/"
 
-func convert_string_to_number(versionString string) (uint64, error) {
+func convertStringToNumber(versionString string) (uint64, error) {
 	versionNumbers := strings.Split(versionString, ".")
 	// For now assume we are working with 3 decimals major.minor.revision
 	numDecimals := 3
@@ -46,7 +46,7 @@ func convert_string_to_number(versionString string) (uint64, error) {
 	return versionValue, nil
 }
 
-func parse_affected_versions(affectedVersionsString string) []VersionRange {
+func parseAffectedVersions(affectedVersionsString string) []VersionRange {
 	affectedVersionStrings := strings.Split(affectedVersionsString, "<br>")
 	versionRanges := []VersionRange{}
 	for _, affectedVersionString := range affectedVersionStrings {
@@ -55,7 +55,7 @@ func parse_affected_versions(affectedVersionsString string) []VersionRange {
 		}
 		if strings.HasPrefix(affectedVersionString, "All releases prior to ") {
 			// Handle All releases prior to 1.9.8
-			maxVersion, err := convert_string_to_number(strings.Split(affectedVersionString, "All releases prior to ")[1])
+			maxVersion, err := convertStringToNumber(strings.Split(affectedVersionString, "All releases prior to ")[1])
 			// we want PRIOR to this version, so drop the revision by 1
 			maxVersion = maxVersion - 1
 			if err != nil {
@@ -68,11 +68,11 @@ func parse_affected_versions(affectedVersionsString string) []VersionRange {
 			versionRanges = append(versionRanges, vr)
 		} else if strings.Contains(affectedVersionString, " to ") {
 			// Handle 1.10.0 to 1.10.3
-			minVersion, err := convert_string_to_number(strings.Split(affectedVersionString, " to ")[0])
+			minVersion, err := convertStringToNumber(strings.Split(affectedVersionString, " to ")[0])
 			if err != nil {
 				fmt.Println("Found a version string we couldn't convert: " + affectedVersionString)
 			}
-			maxVersion, err := convert_string_to_number(strings.Split(affectedVersionString, " to ")[1])
+			maxVersion, err := convertStringToNumber(strings.Split(affectedVersionString, " to ")[1])
 			if err != nil {
 				fmt.Println("Found a version string we couldn't convert: " + affectedVersionString)
 			}
@@ -87,7 +87,7 @@ func parse_affected_versions(affectedVersionsString string) []VersionRange {
 
 		} else if strings.HasSuffix(affectedVersionString, "patch releases") {
 			// Handle edge case of "All 1.8 patch releases"
-			minVersion, err := convert_string_to_number(strings.Split(affectedVersionString, " ")[1])
+			minVersion, err := convertStringToNumber(strings.Split(affectedVersionString, " ")[1])
 			if err != nil {
 				fmt.Println("Found a version string we couldn't convert: " + affectedVersionString)
 			}
@@ -99,7 +99,7 @@ func parse_affected_versions(affectedVersionsString string) []VersionRange {
 			versionRanges = append(versionRanges, vr)
 		} else {
 			// Handle single version number
-			version, err := convert_string_to_number(affectedVersionString)
+			version, err := convertStringToNumber(affectedVersionString)
 			if err != nil {
 				fmt.Println("Found a version string we couldn't convert: " + affectedVersionString)
 			}
@@ -113,7 +113,7 @@ func parse_affected_versions(affectedVersionsString string) []VersionRange {
 	return versionRanges
 }
 
-func parse_body(body []byte) ([]IstioCVEData, error) {
+func parseBody(body []byte) ([]IstioCVEData, error) {
 
 	cveDataSlice := []IstioCVEData{}
 
@@ -140,7 +140,7 @@ func parse_body(body []byte) ([]IstioCVEData, error) {
 		linkRegex := regexp.MustCompile(`<a href=(.*?)>(.*?)</a>`)
 		discMatches := linkRegex.FindAllStringSubmatch(colMatches[0][1], -1)
 		impactMatches := linkRegex.FindAllStringSubmatch(colMatches[3][1], -1)
-		affectedVersions := parse_affected_versions(colMatches[2][1])
+		affectedVersions := parseAffectedVersions(colMatches[2][1])
 		impactScore := colMatches[3][1]
 		if colMatches[3][1] == "" {
 			impactScore = "N/A"
@@ -158,8 +158,8 @@ func parse_body(body []byte) ([]IstioCVEData, error) {
 
 		data := IstioCVEData{
 			AffectedVersions: affectedVersions,
-			DisclosureId:     discMatches[0][2],
-			DisclosureUrl:    "https://istio.io" + discMatches[0][1],
+			DisclosureID:     discMatches[0][2],
+			DisclosureURL:    "https://istio.io" + discMatches[0][1],
 			DisclosureDate:   colMatches[1][1],
 			ImpactScore:      impactScore,
 			RelatedString:    colMatches[4][1],
@@ -169,8 +169,8 @@ func parse_body(body []byte) ([]IstioCVEData, error) {
 	return cveDataSlice, nil
 }
 
-func scrape_cve_data() ([]IstioCVEData, error) {
-	resp, err := http.Get(BulletinUrl)
+func scrapeCVEs() ([]IstioCVEData, error) {
+	resp, err := http.Get(BulletinURL)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func scrape_cve_data() ([]IstioCVEData, error) {
 	if err != nil {
 		return nil, err
 	}
-	cveData, err := parse_body(body)
+	cveData, err := parseBody(body)
 	if err != nil {
 		return nil, err
 	}

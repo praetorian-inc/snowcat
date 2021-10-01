@@ -74,16 +74,21 @@ func (s *KubeletStrategy) Run(input *types.Discovery) error {
 	var ips []string
 
 	for _, addr := range input.KubeletAddresses {
-		log.Printf("fetching pods from %s kubelet", addr)
 		k, err := kubelet.NewClient(addr)
 		if err != nil {
-			log.Printf("failed to connect to %s kubelet: %s", addr, err)
+			log.WithFields(log.Fields{
+				"addr": addr,
+				"err":  err,
+			}).Warn("failed to connect to kubelet")
 			continue
 		}
 
 		pods, err := k.Pods(ctx)
 		if err != nil {
-			log.Printf("failed to list pods from %s kubelet: %s", addr, err)
+			log.WithFields(log.Fields{
+				"addr": addr,
+				"err":  err,
+			}).Warn("failed to list pods from kubelet")
 			continue
 		}
 

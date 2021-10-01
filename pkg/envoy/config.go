@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spyzhov/ajson"
 )
 
@@ -50,6 +51,11 @@ func LoadConfig(configBytes []byte) (*EnvoyConfig, error) {
 }
 
 func RetrieveConfig(envoyAdminUrl string) (*EnvoyConfig, error) {
+	log.WithFields(log.Fields{
+		"method": "GET",
+		"url":    envoyAdminUrl,
+	}).Debug("sending HTTP request to envoy")
+
 	resp, err := http.Get(envoyAdminUrl)
 	if err != nil {
 		return nil, err

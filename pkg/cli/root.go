@@ -130,7 +130,7 @@ func initConfig() {
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
 		// https://tools.ietf.org/html/rfc3339
-		TimestampFormat: time.RFC3339Nano,
+		TimestampFormat: time.RFC3339,
 	})
 
 	log.Infof("using config file: %s", viper.ConfigFileUsed())

@@ -27,6 +27,10 @@ type Strategy interface {
 func (r *Runner) Run(input *types.Discovery) error {
 	var errs error
 	for _, strategy := range r.Strategies {
+		log.WithFields(log.Fields{
+			"runner":   r.Name,
+			"strategy": strategy.Name(),
+		}).Info("running discovery strategy")
 		err := strategy.Run(input)
 		if err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("%s: %w", strategy.Name(), err))
@@ -43,28 +47,37 @@ func (runners Runners) Run(disco *types.Discovery, resources *types.Resources) {
 	ctx := context.Background()
 
 	for _, r := range runners {
-		log.Printf("running %s runner", r.Name)
-
 		err := r.Run(disco)
 		if err != nil {
-			log.Printf("failed to run %s: %s", r.Name, err)
+			log.WithFields(log.Fields{
+				"runner": r.Name,
+				"err":    err,
+			}).Warn("failed to run")
 		}
 	}
 
 	if disco.DiscoveryAddress != "" {
-		log.Printf("querying xds at %s", disco.DiscoveryAddress)
 		cli, err := xds.NewClient(disco.DiscoveryAddress)
 		if err != nil {
-			log.Printf("failed to initialize xds client: %s", err)
+			log.WithFields(log.Fields{
+				"addr": disco.DiscoveryAddress,
+				"err":  err,
+			}).Warn("failed initialize xds client")
 		}
 		res, err := cli.Resources(ctx)
 		if err != nil {
-			log.Printf("failed to query xds resources: %s", err)
+			log.WithFields(log.Fields{
+				"addr": disco.DiscoveryAddress,
+				"err":  err,
+			}).Warn("failed query xds resources")
 		}
 		resources.Load(res)
 		disco.IstioVersion, err = cli.Version(ctx)
 		if err != nil {
-			log.Printf("failed to query versions via xds resources: %s", err)
+			log.WithFields(log.Fields{
+				"addr": disco.DiscoveryAddress,
+				"err":  err,
+			}).Warn("failed query xds version")
 		}
 		cli.Close()
 	}
@@ -72,15 +85,24 @@ func (runners Runners) Run(disco *types.Discovery, resources *types.Resources) {
 		log.Printf("querying debug API at %s", disco.DebugzAddress)
 		cli, err := debugz.NewClient(disco.DebugzAddress)
 		if err != nil {
-			log.Printf("failed to initialize debugz client: %s", err)
+			log.WithFields(log.Fields{
+				"addr": disco.DebugzAddress,
+				"err":  err,
+			}).Warn("failed initialize debugz client")
 		}
 		res, err := cli.Resources(ctx)
 		if err != nil {
-			log.Printf("failed to query debugz resources: %s", err)
+			log.WithFields(log.Fields{
+				"addr": disco.DebugzAddress,
+				"err":  err,
+			}).Warn("failed query debugz resources")
 		}
 		disco.IstioVersion, err = cli.Version(ctx)
 		if err != nil {
-			log.Printf("failed to query versions via debugz resources: %s", err)
+			log.WithFields(log.Fields{
+				"addr": disco.DebugzAddress,
+				"err":  err,
+			}).Warn("failed query debugz version")
 		}
 		resources.Load(res)
 	}
@@ -88,12 +110,18 @@ func (runners Runners) Run(disco *types.Discovery, resources *types.Resources) {
 		for _, addr := range disco.KubeletAddresses {
 			cli, err := kubeletclient.NewClient(addr)
 			if err != nil {
-				log.Printf("failed to create kubelet client: %s", err)
+				log.WithFields(log.Fields{
+					"addr": addr,
+					"err":  err,
+				}).Warn("failed initialize kubelet client")
 				continue
 			}
 			pods, err := cli.Pods(ctx)
 			if err != nil {
-				log.Printf("failed to query pods from kubelet: %s", err)
+				log.WithFields(log.Fields{
+					"addr": addr,
+					"err":  err,
+				}).Warn("failed query kubelet pods")
 				continue
 			}
 			var res []runtime.Object

@@ -52,6 +52,9 @@ func (s *httpScanner) Scan(addr string, timeout time.Duration) bool {
 	}
 
 	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
+	if err != nil {
+		return false
+	}
 	defer resp.Body.Close()
-	return err == nil
+	return true
 }

@@ -12,7 +12,6 @@ import (
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 type DebugzClient interface {
@@ -55,6 +54,7 @@ func (c *debugzClient) verify() error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("status code %d from %s", resp.StatusCode, url)
 	}
@@ -76,6 +76,7 @@ func (c *debugzClient) Resources(ctx context.Context) ([]runtime.Object, error) 
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	err = json.NewDecoder(resp.Body).Decode(&configs)
 	if err != nil {
@@ -114,6 +115,7 @@ func (c *debugzClient) Version(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err

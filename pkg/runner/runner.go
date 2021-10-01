@@ -87,6 +87,10 @@ func (runners Runners) Run(disco *types.Discovery, resources *types.Resources) {
 	if len(disco.KubeletAddresses) > 0 {
 		for _, addr := range disco.KubeletAddresses {
 			cli, err := kubeletclient.NewClient(addr)
+			if err != nil {
+				log.Printf("failed to create kubelet client: %s", err)
+				continue
+			}
 			pods, err := cli.Pods(ctx)
 			if err != nil {
 				log.Printf("failed to query pods from kubelet: %s", err)

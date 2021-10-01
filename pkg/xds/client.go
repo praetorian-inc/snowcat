@@ -34,7 +34,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
 	blockinggrpc "github.com/praetorian-inc/mithril/pkg/grpc"
 )
@@ -81,12 +80,12 @@ func (xds *xdsClient) makeNodeID() string {
 	return "sidecar~0.0.0.0~mithril~mithril"
 }
 
-func (xds *xdsClient) makeRequest(typeUrl string) *discovery.DiscoveryRequest {
+func (xds *xdsClient) makeRequest(typeURL string) *discovery.DiscoveryRequest {
 	return &discovery.DiscoveryRequest{
 		Node: &core.Node{
 			Id: xds.makeNodeID(),
 		},
-		TypeUrl: typeUrl,
+		TypeUrl: typeURL,
 	}
 }
 
@@ -243,13 +242,13 @@ func decodeMCPResource(data []byte, gvk schema.GroupVersionKind) (runtime.Object
 // (e.g. security.istio.io/v1beta1/AuthorizationPolicy) and
 // returns these resources as Kubernetes runtime.Objects.
 func (xds *xdsClient) List(ctx context.Context, gvk schema.GroupVersionKind) ([]runtime.Object, error) {
-	typeUrl := fmt.Sprintf("%s/%s/%s", gvk.Group, gvk.Version, gvk.Kind)
-	req := xds.makeRequest(typeUrl)
+	typeURL := fmt.Sprintf("%s/%s/%s", gvk.Group, gvk.Version, gvk.Kind)
+	req := xds.makeRequest(typeURL)
 	resp, err := xds.send(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if resp.TypeUrl != typeUrl {
+	if resp.TypeUrl != typeURL {
 		return nil, fmt.Errorf("unexpected typeUrl: %s", resp.TypeUrl)
 	}
 

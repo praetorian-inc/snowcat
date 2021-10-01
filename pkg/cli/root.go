@@ -20,6 +20,7 @@ import (
 	"github.com/praetorian-inc/mithril/pkg/runner/namespace"
 	"github.com/praetorian-inc/mithril/pkg/types"
 
+	// Register all auditors
 	_ "github.com/praetorian-inc/mithril/auditors/auth"
 	_ "github.com/praetorian-inc/mithril/auditors/authz"
 	_ "github.com/praetorian-inc/mithril/auditors/destinationrule"

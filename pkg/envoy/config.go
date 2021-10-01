@@ -2,10 +2,11 @@ package envoy
 
 import (
 	"fmt"
-	"github.com/spyzhov/ajson"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/spyzhov/ajson"
 )
 
 type EnvoyConfig struct {

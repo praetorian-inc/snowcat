@@ -34,22 +34,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
 	blockinggrpc "github.com/praetorian-inc/mithril/pkg/grpc"
-)
-
-var (
-	// From: https://github.com/kubernetes/apimachinery/blob/v0.22.2/pkg/runtime/serializer/protobuf/protobuf.go#L44
-	// protoEncodingPrefix serves as a magic number for an encoded protobuf message on this serializer. All
-	// proto messages serialized by this schema will be preceded by the bytes 0x6b 0x38 0x73, with the fourth
-	// byte being reserved for the encoding style. The only encoding style defined is 0x00, which means that
-	// the rest of the byte stream is a message of type k8s.io.kubernetes.pkg.runtime.Unknown (proto2).
-	//
-	// See k8s.io/apimachinery/pkg/runtime/generated.proto for details of the runtime.Unknown message.
-	//
-	// This encoding scheme is experimental, and is subject to change at any time.
-	protoEncodingPrefix = []byte{0x6b, 0x38, 0x73, 0x00}
 )
 
 type DiscoveryClient interface {
@@ -94,12 +80,12 @@ func (xds *xdsClient) makeNodeID() string {
 	return "sidecar~0.0.0.0~mithril~mithril"
 }
 
-func (xds *xdsClient) makeRequest(typeUrl string) *discovery.DiscoveryRequest {
+func (xds *xdsClient) makeRequest(typeURL string) *discovery.DiscoveryRequest {
 	return &discovery.DiscoveryRequest{
 		Node: &core.Node{
 			Id: xds.makeNodeID(),
 		},
-		TypeUrl: typeUrl,
+		TypeUrl: typeURL,
 	}
 }
 
@@ -256,13 +242,13 @@ func decodeMCPResource(data []byte, gvk schema.GroupVersionKind) (runtime.Object
 // (e.g. security.istio.io/v1beta1/AuthorizationPolicy) and
 // returns these resources as Kubernetes runtime.Objects.
 func (xds *xdsClient) List(ctx context.Context, gvk schema.GroupVersionKind) ([]runtime.Object, error) {
-	typeUrl := fmt.Sprintf("%s/%s/%s", gvk.Group, gvk.Version, gvk.Kind)
-	req := xds.makeRequest(typeUrl)
+	typeURL := fmt.Sprintf("%s/%s/%s", gvk.Group, gvk.Version, gvk.Kind)
+	req := xds.makeRequest(typeURL)
 	resp, err := xds.send(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if resp.TypeUrl != typeUrl {
+	if resp.TypeUrl != typeURL {
 		return nil, fmt.Errorf("unexpected typeUrl: %s", resp.TypeUrl)
 	}
 

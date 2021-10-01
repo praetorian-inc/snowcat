@@ -46,10 +46,7 @@ func hasDiscoveryService(host string) bool {
 
 func hasDebugService(host string) bool {
 	_, err := debugz.NewClient(host + ":8080")
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 func isDebugIstiod(host string) bool {

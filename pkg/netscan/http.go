@@ -51,6 +51,10 @@ func (s *httpScanner) Scan(addr string, timeout time.Duration) bool {
 		log.Printf("invalid url: %s", err)
 	}
 
-	_, err = http.DefaultClient.Do(req.WithContext(ctx))
-	return err == nil
+	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	return true
 }

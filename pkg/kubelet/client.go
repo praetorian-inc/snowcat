@@ -10,7 +10,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 type KubeletClient interface {
@@ -47,6 +46,7 @@ func (c *kubeletClient) verify() error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("status code %d from %s", resp.StatusCode, url)
 	}
@@ -66,6 +66,7 @@ func (c *kubeletClient) Pods(ctx context.Context) ([]v1.Pod, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	buf, err := io.ReadAll(resp.Body)
 	if err != nil {

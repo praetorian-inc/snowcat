@@ -35,7 +35,7 @@ func (a *Auditor) Audit(disco types.Discovery, _ types.Resources) ([]types.Audit
 		results = append(results, types.AuditResult{
 			Name:        a.Name(),
 			Resource:    "Version " + disco.IstioVersion,
-			Description: fmt.Sprintf("Vulnerable to %s (Impact Score %s) - more details at %s", vuln.DisclosureId, vuln.ImpactScore, vuln.DisclosureUrl),
+			Description: fmt.Sprintf("Vulnerable to %s (Impact Score %s) - more details at %s", vuln.DisclosureID, vuln.ImpactScore, vuln.DisclosureURL),
 		})
 	}
 

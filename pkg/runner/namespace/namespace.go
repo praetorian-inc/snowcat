@@ -1,3 +1,16 @@
+/* package namespace implements a runner to locate the kubernetes namespace
+   associated with the istio control plane. to accomplish this, it comes
+   equipped with the following strategies:
+
+DefaultStrategy:
+   by default, the istio control plane is set up in a namespace called
+   `istio-system`. this strategy merely attempts to use this as the target
+   namespace.
+
+EnvoyStrategy:
+   given access to `127.0.0.1:15000/server_info`, the envoy debug service, a
+   client can extract the discovery address, which contains the istio namespace.
+*/
 package namespace
 
 import (
@@ -9,11 +22,14 @@ import (
 	"github.com/praetorian-inc/mithril/pkg/types"
 )
 
+/* Runner provides the list of strategies to use to gather information about the
+   istio control plane components
+*/
 var Runner = runner.Runner{
 	Name: "Namespace",
 	Strategies: []runner.Strategy{
-		&EnvoyStrategy{},
-		&DefaultStrategy{},
+		&envoyStrategy{},
+		&defaultStrategy{},
 	},
 }
 
@@ -24,13 +40,22 @@ func verifyIstioNamespace(addr string) error {
 	return nil
 }
 
-type DefaultStrategy struct{}
+type defaultStrategy struct{}
 
-func (s *DefaultStrategy) Name() string {
+/* Name returns the strategy name for reporting purposes.
+
+   required by the Strategy interface
+*/
+func (s *defaultStrategy) Name() string {
 	return "default"
 }
 
-func (s *DefaultStrategy) Run(input *types.Discovery) error {
+/* Run executes the default strategy and populates the Discovery type's
+   IstioNamespace if it can verify the results.
+
+   required by the Strategy interface
+*/
+func (s *defaultStrategy) Run(input *types.Discovery) error {
 	// istiod.istio-system.svc.cluster.local:15010
 	ns := "istio-system"
 
@@ -44,13 +69,22 @@ func (s *DefaultStrategy) Run(input *types.Discovery) error {
 	return nil
 }
 
-type EnvoyStrategy struct{}
+type envoyStrategy struct{}
 
-func (s *EnvoyStrategy) Name() string {
+/* Name returns the strategy name for reporting purposes.
+
+   required by the Strategy interface
+*/
+func (s *envoyStrategy) Name() string {
 	return "envoy"
 }
 
-func (s *EnvoyStrategy) Run(input *types.Discovery) error {
+/* Run executes the envoy strategy and populates the Discovery type's
+   IstioNamespace if it can verify the results.
+
+   required by the Strategy interface
+*/
+func (s *envoyStrategy) Run(input *types.Discovery) error {
 	// curl -s 127.0.0.1:15000/server_info | jq -r .node.metadata.PROXY_CONFIG.discoveryAddress
 	ec, err := envoy.RetrieveConfig("http://localhost:15000/config_dump")
 	if err != nil {

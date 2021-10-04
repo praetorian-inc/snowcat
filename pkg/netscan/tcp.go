@@ -4,11 +4,17 @@ import (
 	"net"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type tcpScanner struct{}
 
 func (s *tcpScanner) Scan(target string, timeout time.Duration) bool {
+	log.WithFields(log.Fields{
+		"addr": target,
+	}).Trace("dialing tcp address for port scan")
+
 	conn, err := net.DialTimeout("tcp", target, timeout)
 
 	// i don't like this part...if there's a better way we should do it...

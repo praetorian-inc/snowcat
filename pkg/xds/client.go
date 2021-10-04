@@ -26,6 +26,7 @@ import (
 	core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	discovery "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
 	"github.com/gogo/protobuf/proto"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	mcp "istio.io/api/mcp/v1alpha1"
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
@@ -98,6 +99,10 @@ func (xds *xdsClient) connect(ctx context.Context) error {
 	connctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 	defer cancel()
 
+	log.WithFields(log.Fields{
+		"addr": xds.discoveryAddr,
+	}).Debug("connecting to xds")
+
 	xds.conn, err = blockinggrpc.BlockingDial(connctx, "tcp", xds.discoveryAddr, nil, xds.opts...)
 	if err != nil {
 		return err
@@ -132,6 +137,17 @@ func (xds *xdsClient) send(ctx context.Context, req *discovery.DiscoveryRequest)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if req.TypeUrl == "" {
+		log.WithFields(log.Fields{
+			"addr": xds.discoveryAddr,
+		}).Trace("sending xds version request")
+	} else {
+		log.WithFields(log.Fields{
+			"addr":    xds.discoveryAddr,
+			"typeURL": req.TypeUrl,
+		}).Trace("sending xds request")
 	}
 
 	err := xds.stream.Send(req)

@@ -168,7 +168,10 @@ func (r *Resources) Load(resources []runtime.Object) error {
 				r.Namespaces = append(r.Namespaces, *obj)
 			})
 		default:
-			log.Printf("unknown resource %T", obj)
+			gvk := obj.GetObjectKind().GroupVersionKind()
+			log.WithFields(log.Fields{
+				"type": gvk.String(),
+			}).Warn("cannot load resource of unknown type")
 		}
 	}
 	return nil

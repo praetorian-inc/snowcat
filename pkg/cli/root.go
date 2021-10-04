@@ -112,11 +112,13 @@ func initConfig() {
 	err := viper.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			log.Info("configuration file not found")
+			log.Warn("configuration file not found")
 		} else if os.IsNotExist(err) {
-			log.Info("configuration file not found")
+			log.Warn("configuration file not found")
 		} else {
-			log.Fatalf("issue reading configuration file: %s", err)
+			log.WithFields(log.Fields{
+				"err": err,
+			}).Fatal("issue reading configuration file")
 		}
 	}
 
@@ -130,17 +132,21 @@ func initConfig() {
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
 		// https://tools.ietf.org/html/rfc3339
-		TimestampFormat: time.RFC3339Nano,
+		TimestampFormat: time.RFC3339,
 	})
 
-	log.Infof("using config file: %s", viper.ConfigFileUsed())
+	log.WithFields(log.Fields{
+		"configFile": viper.ConfigFileUsed(),
+	}).Info("successfully loaded config file")
 }
 
 // Execute is the entrypoint into the cmd line interface. It will execute the
 // desired subcommand and check for an error, reporting it if so
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		log.Fatalf("error during command execution: %s", err)
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Fatal("error during command execution")
 	}
 }
 
@@ -170,7 +176,9 @@ func RunMithril(args []string) {
 
 	auditors, err := auditors.New(types.Config{})
 	if err != nil {
-		log.Fatalf("failed to initialize auditors: %s", err)
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Fatal("failed to initialize auditors")
 	}
 
 	disco := buildInitialDiscovery()
@@ -188,29 +196,41 @@ func RunMithril(args []string) {
 	} else {
 		err = resources.LoadFromDirectory(inputPath)
 		if err != nil {
-			log.Fatalf("failed to load resources: %s", err)
+			log.WithFields(log.Fields{
+				"err": err,
+			}).Fatalf("failed to load resources")
 		}
 	}
 
 	if resources.Len() == 0 {
-		log.Fatalf("failed to discovery any resources")
+		log.Fatal("failed to discovery any resources")
 	}
 
 	if exportDirectoryFlag != "" {
-		log.Printf("exporting resources to %s", exportDirectoryFlag)
+		log.WithFields(log.Fields{
+			"exportDirectory": exportDirectoryFlag,
+		}).Info("exporting resources")
+
 		err = resources.Export(exportDirectoryFlag)
 		if err != nil {
-			log.Printf("failed to export resources: %s", err)
+			log.WithFields(log.Fields{
+				"err": err,
+			}).Errorf("failed to export resources")
 		}
 	}
 
 	var results []types.AuditResult
 	for _, auditor := range auditors {
-		log.Printf("running auditor %s", auditor.Name())
+		log.WithFields(log.Fields{
+			"auditor": auditor.Name(),
+		}).Info("running auditor")
 
 		res, err := auditor.Audit(disco, resources)
 		if err != nil {
-			log.Printf("%s failed to run: %s", auditor.Name(), err)
+			log.WithFields(log.Fields{
+				"auditor": auditor.Name(),
+				"err":     err,
+			}).Error("auditor failed to run")
 		}
 		results = append(results, res...)
 	}
@@ -228,7 +248,9 @@ func RunMithril(args []string) {
 
 		err := viper.WriteConfig()
 		if err != nil {
-			log.Errorf("could not save configuration: %s", err)
+			log.WithFields(log.Fields{
+				"err": err,
+			}).Errorf("could not save configuration")
 		}
 	}
 }

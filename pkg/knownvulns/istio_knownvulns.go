@@ -5,7 +5,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const ScrapedCveYamlData = `
+const scrapedCveYamlData = `
 - affectedversions:
   - minversion: 0
     maxversion: 100090007
@@ -283,17 +283,18 @@ const ScrapedCveYamlData = `
   impactscore: "8.9"
   relatedstring: Incorrect access control`
 
-func GetIstioCVEData() []IstioCVEData {
+func getIstioCVEData() []IstioCVEData {
 	var data []IstioCVEData
-	err := yaml.Unmarshal([]byte(ScrapedCveYamlData), &data)
+	err := yaml.Unmarshal([]byte(scrapedCveYamlData), &data)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
 	return data
 }
 
+// GetVulnsForVersion returns an array of Istio CVEs matching a given version.
 func GetVulnsForVersion(version string) ([]IstioCVEData, error) {
-	vulnData := GetIstioCVEData()
+	vulnData := getIstioCVEData()
 	results := []IstioCVEData{}
 	versionNum, err := convertStringToNumber(version)
 	if err != nil {

@@ -10,15 +10,20 @@ import (
 	"strings"
 )
 
+// VersionRange represents the range of vulnerable versions.
+// Versions are represented as integers using the following formula:
+//   major * 100^2 + minor*100^1 + revision*100^0
 type VersionRange struct {
 	MinVersion uint64
 	MaxVersion uint64
 }
 
+// MatchesVersion returns true if the given version is within the range.
 func (vr *VersionRange) MatchesVersion(version uint64) bool {
 	return version <= vr.MaxVersion && version >= vr.MinVersion
 }
 
+// IstioCVEData represents a single CVE in Istio.
 type IstioCVEData struct {
 	AffectedVersions []VersionRange
 	DisclosureID     string
@@ -28,7 +33,10 @@ type IstioCVEData struct {
 	RelatedString    string
 }
 
-const BulletinURL string = "https://istio.io/latest/news/security/"
+const (
+	// BulletinURL is the URL where Istio vulnerabilities are published.
+	BulletinURL string = "https://istio.io/latest/news/security/"
+)
 
 func convertStringToNumber(versionString string) (uint64, error) {
 	versionNumbers := strings.Split(versionString, ".")

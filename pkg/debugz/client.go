@@ -105,6 +105,7 @@ func getVersionFromBody(body []byte) (string, error) {
 	return string(matches[0][1]), nil
 }
 
+// Version returns the Istio version from the debug API.
 func (c *Client) Version(ctx context.Context) (string, error) {
 	url := fmt.Sprintf("http://%s/debug/syncz", c.debugAddr)
 	req, err := http.NewRequest("GET", url, nil)

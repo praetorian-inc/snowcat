@@ -3,12 +3,12 @@
 // it defines a struct: Runner that is comprised of a list of strategies to
 // carry out. this allows for a data collection goal to have multiple methods of
 // obtaining the desired data.
-
+//
 // strategies take as inputs a types.Discovery, which contains various fields
 // useful in the introspection of an istio system/cluster. the interface is
 // constructed to allow each strategy the opportunity to modify a single
 // Discovery instance (by passing a reference to one).
-
+//
 // to perform a collection, a consuming package will need to construct a Runners
 // struct, containing the list of individual runners desired in the collection,
 // and call the Run() method on it.

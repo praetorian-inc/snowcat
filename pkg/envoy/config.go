@@ -10,10 +10,12 @@ import (
 	"github.com/spyzhov/ajson"
 )
 
+// Config wraps the Envoy config_dump and exposes methods to extract data from it.
 type Config struct {
 	jpathNode *ajson.Node
 }
 
+// DiscoveryAddress extracts the discoveryAddress property from the config_dump.
 func (ec *Config) DiscoveryAddress() (string, error) {
 	// For when the discoveryAddress property exists
 	nodes, err := ec.jpathNode.JSONPath("$..discoveryAddress")
@@ -37,6 +39,7 @@ func (ec *Config) DiscoveryAddress() (string, error) {
 	return "", fmt.Errorf("Could not find discovery address in Envoy config")
 }
 
+// LoadConfig unmarshals bytes into a Config
 func LoadConfig(configBytes []byte) (*Config, error) {
 	root, err := ajson.Unmarshal(configBytes)
 	if err != nil {
@@ -45,6 +48,7 @@ func LoadConfig(configBytes []byte) (*Config, error) {
 	return &Config{jpathNode: root}, nil
 }
 
+// RetrieveConfig fetches a Config from a local envoy service.
 func RetrieveConfig(envoyAdminURL string) (*Config, error) {
 	log.WithFields(log.Fields{
 		"method": "GET",

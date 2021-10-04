@@ -173,6 +173,7 @@ func saveFinalDiscovery(disco types.Discovery) {
 	viper.Set("kubelet-addresses", disco.KubeletAddresses)
 }
 
+// RunMithril runs the scanner.
 func RunMithril(args []string) {
 	var err error
 

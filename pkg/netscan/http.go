@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	InsecureClient = &http.Client{
+	insecureClient = &http.Client{
 		Transport: &http.Transport{
 			DialContext: (&net.Dialer{
 				Timeout:   30 * time.Second,
@@ -59,7 +59,7 @@ func (s *httpScanner) Scan(addr string, timeout time.Duration) bool {
 		"url":    req.URL.String(),
 	}).Trace("sending HTTP request for port scan")
 
-	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
+	resp, err := insecureClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return false
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/praetorian-inc/mithril/auditors"
+	// blank imports are for auditor registration
 	_ "github.com/praetorian-inc/mithril/auditors/authz"
 	_ "github.com/praetorian-inc/mithril/auditors/destinationrule"
 	_ "github.com/praetorian-inc/mithril/auditors/gateway"

@@ -76,7 +76,7 @@ func (s *ScanJob) Scan(timeout time.Duration) chan string {
 
 		for _, host := range s.hosts {
 			for _, port := range s.ports {
-				s.lock.Acquire(context.TODO(), 1)
+				s.lock.Acquire(context.TODO(), 1) // nolint:errcheck // Acquire will only throw errors from the context
 				wg.Add(1)
 
 				addr := net.JoinHostPort(host, port)

@@ -24,7 +24,7 @@ var (
 			TLSHandshakeTimeout:   10 * time.Second,
 			ExpectContinueTimeout: 1 * time.Second,
 			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
+				InsecureSkipVerify: true, // nolint:gosec // Scan even if the TLS cert is invalid.
 			},
 		},
 	}

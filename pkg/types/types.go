@@ -10,36 +10,18 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/hashicorp/go-multierror"
 	log "github.com/sirupsen/logrus"
-	networking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	security "istio.io/client-go/pkg/apis/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
-	operator "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/praetorian-inc/mithril/pkg/util/namer"
 )
-
-type Config struct {
-}
-
-type IstioContext interface {
-	IstioNamespace() (string, error)
-	Namespaces() ([]string, error)
-	Version() (string, error)
-	IstioOperator() (operator.IstioOperator, error)
-	PeerAuthentications() ([]security.PeerAuthentication, error)
-	AuthorizationPolicies() ([]security.AuthorizationPolicy, error)
-	DestinationRules() ([]networking.DestinationRule, error)
-	Gateways() ([]networking.Gateway, error)
-	VirtualServices() ([]networking.VirtualService, error)
-}
 
 type AuditResult struct {
 	Name        string   `json:"name"`

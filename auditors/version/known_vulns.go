@@ -1,3 +1,5 @@
+// Package version provides auditor implementations that analyze
+// the version of Istio for known CVEs.
 package version
 
 import (
@@ -10,16 +12,16 @@ import (
 )
 
 func init() {
-	auditors.Register(&Auditor{})
+	auditors.Register(&auditor{})
 }
 
-type Auditor struct{}
+type auditor struct{}
 
-func (a *Auditor) Name() string {
+func (a *auditor) Name() string {
 	return "Known Vulnerable Version"
 }
 
-func (a *Auditor) Audit(disco types.Discovery, _ types.Resources) ([]types.AuditResult, error) {
+func (a *auditor) Audit(disco types.Discovery, _ types.Resources) ([]types.AuditResult, error) {
 	var results []types.AuditResult
 
 	if disco.IstioVersion == "" {

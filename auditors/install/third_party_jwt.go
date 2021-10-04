@@ -1,3 +1,5 @@
+// Package install provides auditor implementations that analyze
+// the IstioOperator and general control plane configurations.
 package install
 
 import (
@@ -8,16 +10,16 @@ import (
 )
 
 func init() {
-	auditors.Register(&Auditor{})
+	auditors.Register(&auditor{})
 }
 
-type Auditor struct{}
+type auditor struct{}
 
-func (a *Auditor) Name() string {
-	return "Third Party Tokens"
+func (a *auditor) Name() string {
+	return "Weak Service Account Authentication"
 }
 
-func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.AuditResult, error) {
+func (a *auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.AuditResult, error) {
 	var results []types.AuditResult
 
 	var policy string
@@ -63,7 +65,7 @@ func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.A
 
 	if foundSidecar && policy != "third-party-jwt" {
 		results = append(results, types.AuditResult{
-			Name:        "Weak Service Account Authentication",
+			Name:        a.Name(),
 			Description: "JWT policy not set to third-party-jwt",
 		})
 	}

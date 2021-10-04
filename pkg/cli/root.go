@@ -21,11 +21,11 @@ import (
 	"github.com/praetorian-inc/mithril/pkg/types"
 
 	// Register all auditors
-	_ "github.com/praetorian-inc/mithril/auditors/auth"
 	_ "github.com/praetorian-inc/mithril/auditors/authz"
 	_ "github.com/praetorian-inc/mithril/auditors/destinationrule"
 	_ "github.com/praetorian-inc/mithril/auditors/gateway"
 	_ "github.com/praetorian-inc/mithril/auditors/install"
+	_ "github.com/praetorian-inc/mithril/auditors/peerauth"
 	_ "github.com/praetorian-inc/mithril/auditors/version"
 )
 
@@ -169,16 +169,11 @@ func saveFinalDiscovery(disco types.Discovery) {
 }
 
 func RunMithril(args []string) {
+	var err error
+
 	var inputPath string
 	if len(args) == 1 {
 		inputPath = args[0]
-	}
-
-	auditors, err := auditors.New(types.Config{})
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err": err,
-		}).Fatal("failed to initialize auditors")
 	}
 
 	disco := buildInitialDiscovery()
@@ -220,7 +215,7 @@ func RunMithril(args []string) {
 	}
 
 	var results []types.AuditResult
-	for _, auditor := range auditors {
+	for _, auditor := range auditors.All() {
 		log.WithFields(log.Fields{
 			"auditor": auditor.Name(),
 		}).Info("running auditor")

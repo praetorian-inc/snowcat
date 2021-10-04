@@ -1,3 +1,5 @@
+// Package destinationrule provides auditor implementations that analyze
+// Istio DestinationRules.
 package destinationrule
 
 import (
@@ -10,12 +12,12 @@ import (
 )
 
 func init() {
-	auditors.Register(&Auditor{})
+	auditors.Register(&auditor{})
 }
 
-type Auditor struct{}
+type auditor struct{}
 
-func (a *Auditor) Name() string {
+func (a *auditor) Name() string {
 	return "TLS Validation in Destination Rule"
 }
 
@@ -24,7 +26,7 @@ func isClientTLSSettingSafe(tls *networkingv1alpha3.ClientTLSSettings) bool {
 	return tls == nil || tls.Mode.String() != "SIMPLE" || tls.CaCertificates != ""
 }
 
-func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.AuditResult, error) {
+func (a *auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.AuditResult, error) {
 	var results []types.AuditResult
 
 	for _, rule := range resources.DestinationRules {

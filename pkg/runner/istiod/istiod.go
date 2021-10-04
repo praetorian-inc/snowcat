@@ -1,3 +1,25 @@
+// Package istiod implements a runner to locate services associated with the
+// istio control plane components. to accomplish this, it comes equipped with
+// the following strategies:
+//
+// KubeletStrategy:
+//    if provided with an ip:port combination known to be running the kubelet api,
+//    this strategy can query for running pods, check them for istio related
+//    labels, and determine whether or not they are running the debug/discovery
+//    services
+//
+// IstiodStrategy:
+//    if provided with the istio namespace, it will attempt to locate the
+//    debug/discovery service at `istiod.{namespace}.svc.cluster.local`
+//
+// IstioPilotStrategy:
+//    if provided with the istio namespace, it will attempt to locate the
+//    debug/discovery services at `istio-pilot.{namespace}.svc.cluster.local`
+//
+// EnvoyConfigStrategy:
+//    the envoy configuration strategy will attempt to connect to
+//    `http://localhost:15000/config_dump` to extract the location of the discovery
+//    address
 package istiod
 
 import (
@@ -15,13 +37,15 @@ import (
 	"github.com/praetorian-inc/mithril/pkg/xds"
 )
 
+// Runner defines the list of strategies to use to discover information about
+// the Istio control plane.
 var Runner = runner.Runner{
 	Name: "Istio Control Plane",
 	Strategies: []runner.Strategy{
-		&KubeletStrategy{},
-		&IstiodStrategy{},
-		&IstioPilotStrategy{},
-		&EnvoyConfigStrategy{},
+		&kubeletStrategy{},
+		&istiodStrategy{},
+		&istioPilotStrategy{},
+		&envoyConfigStrategy{},
 	},
 }
 
@@ -62,13 +86,16 @@ func isDebugIstiod(host string) bool {
 	return false
 }
 
-type KubeletStrategy struct{}
+type kubeletStrategy struct{}
 
-func (s *KubeletStrategy) Name() string {
+// Name returns the strategy name for reporting purposes.
+func (s *kubeletStrategy) Name() string {
 	return "kubelet"
 }
 
-func (s *KubeletStrategy) Run(input *types.Discovery) error {
+// Run executes the kubelet strategy and populates the Discovery type's
+// DiscoveryAddress and DebugzAddress if it can verify the results.
+func (s *kubeletStrategy) Run(input *types.Discovery) error {
 	ctx := context.Background()
 
 	var ips []string
@@ -121,13 +148,16 @@ func (s *KubeletStrategy) Run(input *types.Discovery) error {
 	return nil
 }
 
-type IstiodStrategy struct{}
+type istiodStrategy struct{}
 
-func (s *IstiodStrategy) Name() string {
+// Name returns the strategy name for reporting purposes.
+func (s *istiodStrategy) Name() string {
 	return "istiod"
 }
 
-func (s *IstiodStrategy) Run(input *types.Discovery) error {
+// Run executes the istiod strategy and populates the Discovery type's
+// DiscoveryAddress and DebugzAddress if it can verify the results.
+func (s *istiodStrategy) Run(input *types.Discovery) error {
 	if input.IstioNamespace == "" {
 		return fmt.Errorf("istio namespace required")
 	}
@@ -141,13 +171,16 @@ func (s *IstiodStrategy) Run(input *types.Discovery) error {
 	return nil
 }
 
-type IstioPilotStrategy struct{}
+type istioPilotStrategy struct{}
 
-func (s *IstioPilotStrategy) Name() string {
+// Name returns the strategy name for reporting purposes.
+func (s *istioPilotStrategy) Name() string {
 	return "istio-pilot"
 }
 
-func (s *IstioPilotStrategy) Run(input *types.Discovery) error {
+// Run executes the istio-pilot strategy and populates the Discovery type's
+// DiscoveryAddress and DebugzAddress if it can verify the results.
+func (s *istioPilotStrategy) Run(input *types.Discovery) error {
 	if input.IstioNamespace == "" {
 		return fmt.Errorf("istio namespace required")
 	}
@@ -161,13 +194,16 @@ func (s *IstioPilotStrategy) Run(input *types.Discovery) error {
 	return nil
 }
 
-type EnvoyConfigStrategy struct{}
+type envoyConfigStrategy struct{}
 
-func (s *EnvoyConfigStrategy) Name() string {
+// Name returns the strategy name for reporting purposes.
+func (s *envoyConfigStrategy) Name() string {
 	return "envoy"
 }
 
-func (s *EnvoyConfigStrategy) Run(input *types.Discovery) error {
+// Run executes the envoy config strategy and populates the Discovery type's
+// DiscoveryAddress if it can verify the results.
+func (s *envoyConfigStrategy) Run(input *types.Discovery) error {
 	ec, err := envoy.RetrieveConfig("http://localhost:15000/config_dump")
 	if err != nil {
 		return err

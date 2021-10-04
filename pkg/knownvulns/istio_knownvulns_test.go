@@ -1,12 +1,13 @@
 package knownvulns
 
 import (
-	"github.com/bmizerany/assert"
 	"testing"
+
+	"github.com/bmizerany/assert"
 )
 
 func TestUnmarshallingData(t *testing.T) {
-	data := GetIstioCVEData()
+	data := getIstioCVEData()
 	assert.NotEqual(t, 0, len(data))
 }
 

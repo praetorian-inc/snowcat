@@ -1,8 +1,9 @@
 package debugz
 
 import (
-	"github.com/bmizerany/assert"
 	"testing"
+
+	"github.com/bmizerany/assert"
 )
 
 const DebugSynczContent = `
@@ -73,11 +74,11 @@ func TestGetMatchingVulns(t *testing.T) {
 }
 
 // only usable if localhost 8080 is hosting this endpoint
-//func TestGetMatchingVulnsFromEndpoint(t *testing.T) {
-//	url := "http://127.0.0.1:8080/debug/syncz"
-//	req, _ := http.NewRequest("GET", url, nil)
-//	resp, _ := http.DefaultClient.Do(req)
-//	body, _ := ioutil.ReadAll(resp.Body)
-//	version, _ := getVersionFromBody(body)
-//	assert.Equal(t, "1.10.3", version)
-//}
+// func TestGetMatchingVulnsFromEndpoint(t *testing.T) {
+// 	url := "http://127.0.0.1:8080/debug/syncz"
+// 	req, _ := http.NewRequest("GET", url, nil)
+// 	resp, _ := http.DefaultClient.Do(req)
+// 	body, _ := ioutil.ReadAll(resp.Body)
+// 	version, _ := getVersionFromBody(body)
+// 	assert.Equal(t, "1.10.3", version)
+// }

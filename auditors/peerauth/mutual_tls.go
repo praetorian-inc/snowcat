@@ -1,4 +1,6 @@
-package auth
+// Package peerauth provides auditor implementations that analyze
+// Istio PeerAuthentication policies.
+package peerauth
 
 import (
 	"fmt"
@@ -8,16 +10,16 @@ import (
 )
 
 func init() {
-	auditors.Register(&Auditor{})
+	auditors.Register(&auditor{})
 }
 
-type Auditor struct{}
+type auditor struct{}
 
-func (a *Auditor) Name() string {
-	return "Mututal TLS"
+func (a *auditor) Name() string {
+	return "Permissive Mututal TLS"
 }
 
-func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.AuditResult, error) {
+func (a *auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.AuditResult, error) {
 	var results []types.AuditResult
 
 	namespaceSafety := make(map[string]bool)

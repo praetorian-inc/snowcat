@@ -6,31 +6,27 @@ import (
 	"os"
 	"time"
 
+	"github.com/fatih/color"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	// old imports
-	"github.com/fatih/color"
-
 	"github.com/praetorian-inc/mithril/auditors"
+	// blank imports are for auditor registration
+	_ "github.com/praetorian-inc/mithril/auditors/authz"
+	_ "github.com/praetorian-inc/mithril/auditors/destinationrule"
+	_ "github.com/praetorian-inc/mithril/auditors/gateway"
+	_ "github.com/praetorian-inc/mithril/auditors/install"
+	_ "github.com/praetorian-inc/mithril/auditors/peerauth"
+	_ "github.com/praetorian-inc/mithril/auditors/version"
 	"github.com/praetorian-inc/mithril/pkg/runner"
 	"github.com/praetorian-inc/mithril/pkg/runner/istiod"
 	"github.com/praetorian-inc/mithril/pkg/runner/kubelet"
 	"github.com/praetorian-inc/mithril/pkg/runner/namespace"
 	"github.com/praetorian-inc/mithril/pkg/types"
-
-	// Register all auditors
-	_ "github.com/praetorian-inc/mithril/auditors/auth"
-	_ "github.com/praetorian-inc/mithril/auditors/authz"
-	_ "github.com/praetorian-inc/mithril/auditors/destinationrule"
-	_ "github.com/praetorian-inc/mithril/auditors/gateway"
-	_ "github.com/praetorian-inc/mithril/auditors/install"
-	_ "github.com/praetorian-inc/mithril/auditors/version"
 )
 
 var (
-	// used for flags
 	configFileFlag       string
 	logLevelFlag         string
 	inputDirectoryFlag   string
@@ -75,31 +71,41 @@ and live clusters`,
 }
 
 func init() {
-	rootCmd.Flags().StringVarP(&configFileFlag, "config", "c", "mithril.yml", "mithril configuration file")
-	rootCmd.Flags().StringVarP(&logLevelFlag, "log-level", "l", "info", "log level, see https://github.com/sirupsen/logrus#level-logging for options.")
+	rootCmd.Flags().StringVarP(&configFileFlag, "config", "c", "mithril.yml",
+		"mithril configuration file")
+	rootCmd.Flags().StringVarP(&logLevelFlag, "log-level", "l", "info",
+		"log level, see https://github.com/sirupsen/logrus#level-logging for options.")
 	viper.BindPFlag("log-level", rootCmd.Flags().Lookup("log-level"))
 
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.Flags().StringVar(&inputDirectoryFlag, "input", "", "the input directory of static yaml files to scan")
-	rootCmd.Flags().StringVar(&exportDirectoryFlag, "export", "", "write discovered resources to the specified export directory as yaml")
+	rootCmd.Flags().StringVar(&inputDirectoryFlag, "input", "",
+		"the input directory of static yaml files to scan")
+	rootCmd.Flags().StringVar(&exportDirectoryFlag, "export", "",
+		"write discovered resources to the specified export directory as yaml")
 
-	rootCmd.Flags().StringVar(&istioVersionFlag, "istio-version", "", "the version of the istio control plane")
+	rootCmd.Flags().StringVar(&istioVersionFlag, "istio-version", "",
+		"the version of the istio control plane")
 	viper.BindPFlag("istio-version", rootCmd.Flags().Lookup("istio-version"))
 
-	rootCmd.Flags().StringVar(&istioNamespaceFlag, "istio-namespace", "", "the kubernetes namespace of the istio control plane")
+	rootCmd.Flags().StringVar(&istioNamespaceFlag, "istio-namespace", "",
+		"the kubernetes namespace of the istio control plane")
 	viper.BindPFlag("istio-namespace", rootCmd.Flags().Lookup("istio-namespace"))
 
-	rootCmd.Flags().StringVar(&discoveryAddressFlag, "discovery-address", "", "ip:port of istiod's unauthenticated xds")
+	rootCmd.Flags().StringVar(&discoveryAddressFlag, "discovery-address", "",
+		"ip:port of istiod's unauthenticated xds")
 	viper.BindPFlag("discovery-address", rootCmd.Flags().Lookup("discovery-address"))
 
-	rootCmd.Flags().StringVar(&debugzAddressFlag, "debugz-address", "", "ip:port of istiod's debug api")
+	rootCmd.Flags().StringVar(&debugzAddressFlag, "debugz-address", "",
+		"ip:port of istiod's debug api")
 	viper.BindPFlag("debugz-address", rootCmd.Flags().Lookup("debugz-address"))
 
-	rootCmd.Flags().StringSliceVar(&kubeletAddressesFlag, "kubelet-addresses", []string{}, "list of addresses in form host:port of each node's kubelet read-only api")
+	rootCmd.Flags().StringSliceVar(&kubeletAddressesFlag, "kubelet-addresses", []string{},
+		"list of addresses in form host:port of each node's kubelet read-only api")
 	viper.BindPFlag("kubelet-addresses", rootCmd.Flags().Lookup("kubelet-addresses"))
 
-	rootCmd.Flags().BoolVarP(&saveConfFlag, "save-config", "s", false, "whether or not to save discovery to current config file")
+	rootCmd.Flags().BoolVarP(&saveConfFlag, "save-config", "s", false,
+		"whether or not to save discovery to current config file")
 }
 
 func initConfig() {
@@ -168,17 +174,13 @@ func saveFinalDiscovery(disco types.Discovery) {
 	viper.Set("kubelet-addresses", disco.KubeletAddresses)
 }
 
+// RunMithril runs the scanner.
 func RunMithril(args []string) {
+	var err error
+
 	var inputPath string
 	if len(args) == 1 {
 		inputPath = args[0]
-	}
-
-	auditors, err := auditors.New(types.Config{})
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err": err,
-		}).Fatal("failed to initialize auditors")
 	}
 
 	disco := buildInitialDiscovery()
@@ -220,7 +222,7 @@ func RunMithril(args []string) {
 	}
 
 	var results []types.AuditResult
-	for _, auditor := range auditors {
+	for _, auditor := range auditors.All() {
 		log.WithFields(log.Fields{
 			"auditor": auditor.Name(),
 		}).Info("running auditor")

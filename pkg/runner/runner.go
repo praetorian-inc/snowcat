@@ -1,3 +1,17 @@
+// Package runner provides an abstraction layer: Strategy, for general
+// collection of information about a cluster and its components. Additionally,
+// it defines a struct: Runner that is comprised of a list of strategies to
+// carry out. this allows for a data collection goal to have multiple methods of
+// obtaining the desired data.
+//
+// strategies take as inputs a types.Discovery, which contains various fields
+// useful in the introspection of an istio system/cluster. the interface is
+// constructed to allow each strategy the opportunity to modify a single
+// Discovery instance (by passing a reference to one).
+//
+// to perform a collection, a consuming package will need to construct a Runners
+// struct, containing the list of individual runners desired in the collection,
+// and call the Run() method on it.
 package runner
 
 import (
@@ -14,16 +28,28 @@ import (
 	"github.com/praetorian-inc/mithril/pkg/xds"
 )
 
+// Runner is a struct containing several strategies to try in cluster enumeration.
 type Runner struct {
 	Name       string
 	Strategies []Strategy
 }
 
+// Strategy is an interface that abstractly describes how information is to be
+// collected in an istio system.
 type Strategy interface {
+	// Name merely returns the strategy's name for reporting purposes.
 	Name() string
+	// Run is called on every strategy to execute its particular method
+	// of collection. it is passed a reference to a types.Discovery struct to record
+	// gathered and verified data. it is assumed that the implementation of this
+	// function will perform validation of discovered data before recording it to
+	// the Discovery struct.
 	Run(input *types.Discovery) error
 }
 
+// Run as defined for a runner loops over all strategies and passes a
+// *types.Discovery. it then surfaces any errors it receives. if all strategies
+// fail, an error is produced
 func (r *Runner) Run(input *types.Discovery) error {
 	var errs error
 	for _, strategy := range r.Strategies {
@@ -41,8 +67,12 @@ func (r *Runner) Run(input *types.Discovery) error {
 	return fmt.Errorf("all strategies failed: %s", errs)
 }
 
+// Runners defines a type alias for a list of Runner structs
 type Runners []Runner
 
+// Run as defined for a Runners type iterates over all runners in the list, and
+// calls each runner's Run() method. it then looks at the resulting
+// types.Discovery and attempts to use them to confirm if they are correct.
 func (runners Runners) Run(disco *types.Discovery, resources *types.Resources) {
 	ctx := context.Background()
 

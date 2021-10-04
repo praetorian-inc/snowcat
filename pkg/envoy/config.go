@@ -10,56 +10,57 @@ import (
 	"github.com/spyzhov/ajson"
 )
 
-type EnvoyConfig struct {
+// Config wraps the Envoy config_dump and exposes methods to extract data from it.
+type Config struct {
 	jpathNode *ajson.Node
 }
 
-func (ec *EnvoyConfig) DiscoveryAddress() (string, error) {
+// DiscoveryAddress extracts the discoveryAddress property from the config_dump.
+func (ec *Config) DiscoveryAddress() (string, error) {
 	// For when the discoveryAddress property exists
 	nodes, err := ec.jpathNode.JSONPath("$..discoveryAddress")
 	if err == nil && nodes != nil && len(nodes) > 0 {
-		addressStringVal := nodes[0].String()
-		addressStringVal = strings.Replace(addressStringVal, "\"", "", -1)
-		return addressStringVal, nil
+		return strings.ReplaceAll(nodes[0].String(), "\"", ""), nil
 	}
 
 	// For when there is a dynamic route config to port 15010 or 15012
 	nodes, err = ec.jpathNode.JSONPath("$..name")
-	if err == nil && nodes != nil && len(nodes) > 0 {
-		for _, node := range nodes {
-			addressStringVal := node.String()
-			addressStringVal = strings.Replace(addressStringVal, "\"", "", -1)
-			if strings.HasSuffix(addressStringVal, ":15010") || strings.HasSuffix(addressStringVal, ":15012") {
-				return addressStringVal, nil
-			}
-		}
-	}
-
 	if err != nil {
 		return "", err
+	}
+
+	for _, node := range nodes {
+		addr := strings.ReplaceAll(node.String(), "\"", "")
+		if strings.HasSuffix(addr, ":15010") || strings.HasSuffix(addr, ":15012") {
+			return addr, nil
+		}
 	}
 
 	return "", fmt.Errorf("Could not find discovery address in Envoy config")
 }
 
-func LoadConfig(configBytes []byte) (*EnvoyConfig, error) {
+// LoadConfig unmarshals bytes into a Config
+func LoadConfig(configBytes []byte) (*Config, error) {
 	root, err := ajson.Unmarshal(configBytes)
 	if err != nil {
 		return nil, err
 	}
-	return &EnvoyConfig{jpathNode: root}, nil
+	return &Config{jpathNode: root}, nil
 }
 
-func RetrieveConfig(envoyAdminUrl string) (*EnvoyConfig, error) {
+// RetrieveConfig fetches a Config from a local envoy service.
+func RetrieveConfig(envoyAdminURL string) (*Config, error) {
 	log.WithFields(log.Fields{
 		"method": "GET",
-		"url":    envoyAdminUrl,
+		"url":    envoyAdminURL,
 	}).Debug("sending HTTP request to envoy")
 
-	resp, err := http.Get(envoyAdminUrl)
+	resp, err := http.Get(envoyAdminURL) // nolint:gosec
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err

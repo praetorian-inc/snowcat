@@ -1,46 +1,28 @@
+// Package types contains shared types across the runners and auditors.
 package types
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/hashicorp/go-multierror"
 	log "github.com/sirupsen/logrus"
-	networking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	security "istio.io/client-go/pkg/apis/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
-	operator "istio.io/istio/operator/pkg/apis/istio/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/praetorian-inc/mithril/pkg/util/namer"
 )
 
-type Config struct {
-}
-
-type IstioContext interface {
-	IstioNamespace() (string, error)
-	Namespaces() ([]string, error)
-	Version() (string, error)
-	IstioOperator() (operator.IstioOperator, error)
-	PeerAuthentications() ([]security.PeerAuthentication, error)
-	AuthorizationPolicies() ([]security.AuthorizationPolicy, error)
-	DestinationRules() ([]networking.DestinationRule, error)
-	Gateways() ([]networking.Gateway, error)
-	VirtualServices() ([]networking.VirtualService, error)
-}
-
+// AuditResult is a single instance of an issue discovered by an auditor.
 type AuditResult struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
@@ -48,17 +30,41 @@ type AuditResult struct {
 	Resource    string   `json:"resource"`
 }
 
+// Severity represents the CVSS severity of an issue.
 type Severity int
 
 const (
+	// Unknown severity or not yet rated
 	Unknown Severity = iota
+	// None represents a CVSS base score of 0.0
+	None = iota
+	// Low represents a CVSS base score of 0.1 to 3.9
+	Low = iota
+	// Medium represents a CVSS base score of 4.0 to 6.9
+	Medium = iota
+	// High represents a CVSS base score of 7.0 to 8.9
+	High = iota
+	// Critical represents a CVSS base score of 9.0 to 10.0
+	Critical = iota
 )
 
+// Auditor is the interface that all auditors conform to and is
+// required for auditor registration. Auditors should be scoped
+// to a single issue.
 type Auditor interface {
+	// Name returns a human-readable name to be associated with the
+	// AuditResults from an auditor
 	Name() string
+	// Audit returns an array of AuditResults after scanning the
+	// provided Discovery and Resources for a particular issue.
+	// Audit may also return an error if required data is not
+	// present or if the data is in an invalid format.
 	Audit(Discovery, Resources) ([]AuditResult, error)
 }
 
+// Discovery represents all facts learned during the discovery phase of the scanner.
+// These facts are used to populate the Resources from a deployment and are passed
+// to each auditor to help with its scanning.
 type Discovery struct {
 	// IstioVersion is the version of the istio control plane.
 	IstioVersion string
@@ -73,12 +79,9 @@ type Discovery struct {
 	KubeletAddresses []string
 }
 
-type ObjectGetter interface {
-	io.Closer
-
-	Resources(ctx context.Context) []runtime.Object
-}
-
+// Resources holds all known API objects related to the target. Resources are
+// populated by various clients (e.g. xds, kubelet) and contains several
+// different types of object (e.g. Namespaces, Pods, AuthorizationPolicies).
 type Resources struct {
 	counter int
 	decoder runtime.Decoder
@@ -95,8 +98,15 @@ type Resources struct {
 	ServiceEntries        []networkingv1alpha3.ServiceEntry
 }
 
+func init() {
+	err := istioscheme.AddToScheme(clientsetscheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// NewResources returns Resources that can track and decode objects from clients.
 func NewResources() Resources {
-	istioscheme.AddToScheme(clientsetscheme.Scheme)
 	return Resources{
 		decoder: clientsetscheme.Codecs.UniversalDeserializer(),
 		seen:    make(map[string]struct{}),
@@ -128,7 +138,10 @@ func (r *Resources) addIfNotExists(obj runtime.Object, meta metav1.ObjectMeta, a
 	r.counter++
 }
 
-func (r *Resources) Load(resources []runtime.Object) error {
+// Load processes an array of Kubernetes runtime objects and adds relevant
+// resources to the state. Load will ignore duplicate entries or entries
+// with unknown types.
+func (r *Resources) Load(resources []runtime.Object) {
 	for _, resource := range resources {
 		switch obj := resource.(type) {
 		case *securityv1beta1.PeerAuthentication:
@@ -174,9 +187,10 @@ func (r *Resources) Load(resources []runtime.Object) error {
 			}).Warn("cannot load resource of unknown type")
 		}
 	}
-	return nil
 }
 
+// LoadFromDirectory processes all YAML files within a directory, decodes them
+// as Kubernetes resources, and loads them into the state.
 func (r *Resources) LoadFromDirectory(dir string) error {
 	root := os.DirFS(dir)
 
@@ -208,13 +222,16 @@ func (r *Resources) load(data []byte) error {
 
 		resources = append(resources, obj)
 	}
-	return r.Load(resources)
+	r.Load(resources)
+	return nil
 }
 
+// Len returns the number of resources within the state.
 func (r *Resources) Len() int {
 	return r.counter
 }
 
+// Export exports all known resources as YAML files in the provided directory.
 func (r *Resources) Export(dir string) error {
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		return err
@@ -272,9 +289,5 @@ func exportObjects(dir string, obj runtime.Object) (err error) {
 		}
 	}()
 
-	if err = encoder.Encode(obj, f); err != nil {
-		return err
-	}
-
-	return nil
+	return encoder.Encode(obj, f)
 }

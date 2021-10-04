@@ -39,14 +39,8 @@ import (
 	blockinggrpc "github.com/praetorian-inc/mithril/pkg/grpc"
 )
 
-type DiscoveryClient interface {
-	Version(ctx context.Context) (string, error)
-	List(ctx context.Context, gvk schema.GroupVersionKind) ([]runtime.Object, error)
-	Resources(ctx context.Context) ([]runtime.Object, error)
-	Close() error
-}
-
-type xdsClient struct {
+// Client wraps Envoy XDS and exposes methods to query data.
+type Client struct {
 	discoveryAddr string
 	opts          []grpc.DialOption
 
@@ -59,29 +53,24 @@ type xdsClient struct {
 }
 
 // NewClient creates an XDS client given a GRPC address.
-func NewClient(addr string) (DiscoveryClient, error) {
-	err := istioscheme.AddToScheme(clientsetscheme.Scheme)
-	if err != nil {
-		return nil, err
-	}
-
-	cli := &xdsClient{
+func NewClient(addr string) (*Client, error) {
+	cli := &Client{
 		discoveryAddr: addr,
 		opts: []grpc.DialOption{
 			grpc.WithInsecure(),
 		},
 		decoder: clientsetscheme.Codecs.UniversalDeserializer(),
 	}
-	_, err = cli.Version(context.Background())
+	_, err := cli.Version(context.Background())
 	return cli, err
 }
 
-func (xds *xdsClient) makeNodeID() string {
+func (xds *Client) makeNodeID() string {
 	// TODO: should we attempt to populate this?
 	return "sidecar~0.0.0.0~mithril~mithril"
 }
 
-func (xds *xdsClient) makeRequest(typeURL string) *discovery.DiscoveryRequest {
+func (xds *Client) makeRequest(typeURL string) *discovery.DiscoveryRequest {
 	return &discovery.DiscoveryRequest{
 		Node: &core.Node{
 			Id: xds.makeNodeID(),
@@ -90,7 +79,7 @@ func (xds *xdsClient) makeRequest(typeURL string) *discovery.DiscoveryRequest {
 	}
 }
 
-func (xds *xdsClient) connect(ctx context.Context) error {
+func (xds *Client) connect(ctx context.Context) error {
 	xds.connMu.Lock()
 	defer xds.connMu.Unlock()
 
@@ -118,7 +107,8 @@ func (xds *xdsClient) connect(ctx context.Context) error {
 	return nil
 }
 
-func (xds *xdsClient) Close() error {
+// Close closes the underlying gRPC connection if present.
+func (xds *Client) Close() error {
 	xds.connMu.Lock()
 	defer xds.connMu.Unlock()
 
@@ -131,7 +121,7 @@ func (xds *xdsClient) Close() error {
 	return nil
 }
 
-func (xds *xdsClient) send(ctx context.Context, req *discovery.DiscoveryRequest) (*discovery.DiscoveryResponse, error) {
+func (xds *Client) send(ctx context.Context, req *discovery.DiscoveryRequest) (*discovery.DiscoveryResponse, error) {
 	if xds.conn == nil {
 		err := xds.connect(ctx)
 		if err != nil {
@@ -169,7 +159,7 @@ func (xds *xdsClient) send(ctx context.Context, req *discovery.DiscoveryRequest)
 //     "tag": "1.10.3"
 //   }
 // }
-func (xds *xdsClient) Version(ctx context.Context) (string, error) {
+func (xds *Client) Version(ctx context.Context) (string, error) {
 	req := xds.makeRequest("")
 	res, err := xds.send(ctx, req)
 	if err != nil {
@@ -254,10 +244,10 @@ func decodeMCPResource(data []byte, gvk schema.GroupVersionKind) (runtime.Object
 	return obj, nil
 }
 
-// Resources queries the XDS server for a given GroupVersionKind
+// List queries the XDS server for a given GroupVersionKind
 // (e.g. security.istio.io/v1beta1/AuthorizationPolicy) and
 // returns these resources as Kubernetes runtime.Objects.
-func (xds *xdsClient) List(ctx context.Context, gvk schema.GroupVersionKind) ([]runtime.Object, error) {
+func (xds *Client) List(ctx context.Context, gvk schema.GroupVersionKind) ([]runtime.Object, error) {
 	typeURL := fmt.Sprintf("%s/%s/%s", gvk.Group, gvk.Version, gvk.Kind)
 	req := xds.makeRequest(typeURL)
 	resp, err := xds.send(ctx, req)
@@ -280,7 +270,8 @@ func (xds *xdsClient) List(ctx context.Context, gvk schema.GroupVersionKind) ([]
 	return resources, nil
 }
 
-func (xds *xdsClient) Resources(ctx context.Context) ([]runtime.Object, error) {
+// Resources queries all Istio resources from the client.
+func (xds *Client) Resources(ctx context.Context) ([]runtime.Object, error) {
 	var resources []runtime.Object
 	for gvk := range istioscheme.Scheme.AllKnownTypes() {
 		res, err := xds.List(ctx, gvk)

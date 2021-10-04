@@ -1,3 +1,5 @@
+// Package gateway provides auditor implementations that analyze
+// Istio Gateways.
 package gateway
 
 import (
@@ -8,16 +10,16 @@ import (
 )
 
 func init() {
-	auditors.Register(&Auditor{})
+	auditors.Register(&auditor{})
 }
 
-type Auditor struct{}
+type auditor struct{}
 
-func (a *Auditor) Name() string {
+func (a *auditor) Name() string {
 	return "Overly Broad Gateway Hosts"
 }
 
-func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.AuditResult, error) {
+func (a *auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.AuditResult, error) {
 	var results []types.AuditResult
 
 	for _, gateway := range resources.Gateways {

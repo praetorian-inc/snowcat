@@ -561,6 +561,30 @@ linters-settings:
 
   revive:
     # see https://github.com/mgechev/revive#available-rules for details.
+    rules:
+    - name: context-as-argument
+    - name: context-keys-type
+    - name: dot-imports
+    - name: error-return
+    - name: error-strings
+    - name: error-naming
+    - name: exported
+    - name: if-return
+    - name: increment-decrement
+    - name: var-naming
+    - name: var-declaration
+    - name: package-comments
+    - name: range
+    - name: receiver-naming
+    - name: time-naming
+    - name: unexported-return
+    - name: indent-error-flow
+    - name: errorf
+    - name: empty-block
+    - name: superfluous-else
+    - name: unused-parameter
+    - name: unreachable-code
+    - name: redefines-builtin-id
 
   staticcheck:
     # Select the Go version to target. The default is '1.13'.
@@ -679,7 +703,7 @@ issues:
   # new-from-patch: path/to/patch/file
 
   # Fix found issues (if it's supported by the linter)
-  fix: true
+  fix: false
 
 severity:
   # Default value is empty string.

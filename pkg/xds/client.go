@@ -244,7 +244,7 @@ func decodeMCPResource(data []byte, gvk schema.GroupVersionKind) (runtime.Object
 	return obj, nil
 }
 
-// Resources queries the XDS server for a given GroupVersionKind
+// List queries the XDS server for a given GroupVersionKind
 // (e.g. security.istio.io/v1beta1/AuthorizationPolicy) and
 // returns these resources as Kubernetes runtime.Objects.
 func (xds *Client) List(ctx context.Context, gvk schema.GroupVersionKind) ([]runtime.Object, error) {

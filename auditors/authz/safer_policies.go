@@ -33,7 +33,7 @@ func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.A
 		case ALLOW:
 			offendingRules := evalAllowPolicy(policy)
 
-			if offendingRules != nil {
+			if len(offendingRules) > 0 {
 				results = append(results, types.AuditResult{
 					Name:        a.Name(),
 					Resource:    policy.Namespace + ":" + policy.Name,
@@ -43,7 +43,7 @@ func (a *Auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.A
 		case DENY:
 			offendingRules := evalDenyPolicy(policy)
 
-			if offendingRules != nil {
+			if len(offendingRules) > 0 {
 				results = append(results, types.AuditResult{
 					Name:        a.Name(),
 					Resource:    policy.Namespace + ":" + policy.Name,
@@ -76,7 +76,6 @@ func evalAllowPolicy(policy security.AuthorizationPolicy) []apiv1beta.Rule {
 				source.NotRequestPrincipals != nil {
 
 				offendingRules = append(offendingRules, *rule)
-				continue // this shadows errors in the to rules, we may not want this
 			}
 		}
 
@@ -91,7 +90,6 @@ func evalAllowPolicy(policy security.AuthorizationPolicy) []apiv1beta.Rule {
 				operation.NotPorts != nil {
 
 				offendingRules = append(offendingRules, *rule)
-				continue
 			}
 		}
 	}
@@ -117,7 +115,6 @@ func evalDenyPolicy(policy security.AuthorizationPolicy) []apiv1beta.Rule {
 				source.RequestPrincipals != nil {
 
 				offendingRules = append(offendingRules, *rule)
-				continue // this shadows errors in the to rules, we may not want this
 			}
 		}
 
@@ -132,7 +129,6 @@ func evalDenyPolicy(policy security.AuthorizationPolicy) []apiv1beta.Rule {
 				operation.Ports != nil {
 
 				offendingRules = append(offendingRules, *rule)
-				continue
 			}
 		}
 	}

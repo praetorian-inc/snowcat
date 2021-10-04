@@ -84,7 +84,6 @@ func parseAffectedVersions(affectedVersionsString string) []VersionRange {
 		} else if strings.HasSuffix(affectedVersionString, "and later") {
 			// Ignore CVEs which are applied to ALL versions after a certain point, our auditors check for these issues
 			continue
-
 		} else if strings.HasSuffix(affectedVersionString, "patch releases") {
 			// Handle edge case of "All 1.8 patch releases"
 			minVersion, err := convertStringToNumber(strings.Split(affectedVersionString, " ")[1])
@@ -114,7 +113,6 @@ func parseAffectedVersions(affectedVersionsString string) []VersionRange {
 }
 
 func parseBody(body []byte) ([]IstioCVEData, error) {
-
 	cveDataSlice := []IstioCVEData{}
 
 	// First get the table with <table>.*</table>

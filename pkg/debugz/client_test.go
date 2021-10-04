@@ -1,8 +1,9 @@
 package debugz
 
 import (
-	"github.com/bmizerany/assert"
 	"testing"
+
+	"github.com/bmizerany/assert"
 )
 
 const DebugSynczContent = `

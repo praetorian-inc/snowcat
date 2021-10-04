@@ -6,19 +6,13 @@ import (
 	"os"
 	"time"
 
+	// old imports
+	"github.com/fatih/color"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	// old imports
-	"github.com/fatih/color"
-
 	"github.com/praetorian-inc/mithril/auditors"
-	"github.com/praetorian-inc/mithril/pkg/runner"
-	"github.com/praetorian-inc/mithril/pkg/runner/istiod"
-	"github.com/praetorian-inc/mithril/pkg/runner/kubelet"
-	"github.com/praetorian-inc/mithril/pkg/runner/namespace"
-	"github.com/praetorian-inc/mithril/pkg/types"
 
 	// Register all auditors
 	_ "github.com/praetorian-inc/mithril/auditors/authz"
@@ -27,6 +21,11 @@ import (
 	_ "github.com/praetorian-inc/mithril/auditors/install"
 	_ "github.com/praetorian-inc/mithril/auditors/peerauth"
 	_ "github.com/praetorian-inc/mithril/auditors/version"
+	"github.com/praetorian-inc/mithril/pkg/runner"
+	"github.com/praetorian-inc/mithril/pkg/runner/istiod"
+	"github.com/praetorian-inc/mithril/pkg/runner/kubelet"
+	"github.com/praetorian-inc/mithril/pkg/runner/namespace"
+	"github.com/praetorian-inc/mithril/pkg/types"
 )
 
 var (

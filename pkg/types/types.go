@@ -1,10 +1,9 @@
+// Package types contains shared types across the runners and auditors.
 package types
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -23,6 +22,7 @@ import (
 	"github.com/praetorian-inc/mithril/pkg/util/namer"
 )
 
+// AuditResult is a single instance of an issue discovered by an auditor.
 type AuditResult struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
@@ -30,17 +30,41 @@ type AuditResult struct {
 	Resource    string   `json:"resource"`
 }
 
+// Severity represents the CVSS severity of an issue.
 type Severity int
 
 const (
+	// Unknown severity or not yet rated
 	Unknown Severity = iota
+	// None represents a CVSS base score of 0.0
+	None = iota
+	// Low represents a CVSS base score of 0.1 to 3.9
+	Low = iota
+	// Medium represents a CVSS base score of 4.0 to 6.9
+	Medium = iota
+	// High represents a CVSS base score of 7.0 to 8.9
+	High = iota
+	// Critical represents a CVSS base score of 9.0 to 10.0
+	Critical = iota
 )
 
+// Auditor is the interface that all auditors conform to and is
+// required for auditor registration. Auditors should be scoped
+// to a single issue.
 type Auditor interface {
+	// Name returns a human-readable name to be associated with the
+	// AuditResults from an auditor
 	Name() string
+	// Audit returns an array of AuditResults after scanning the
+	// provided Discovery and Resources for a particular issue.
+	// Audit may also return an error if required data is not
+	// present or if the data is in an invalid format.
 	Audit(Discovery, Resources) ([]AuditResult, error)
 }
 
+// Discovery represents all facts learned during the discovery phase of the scanner.
+// These facts are used to populate the Resources from a deployment and are passed
+// to each auditor to help with its scanning.
 type Discovery struct {
 	// IstioVersion is the version of the istio control plane.
 	IstioVersion string
@@ -55,12 +79,9 @@ type Discovery struct {
 	KubeletAddresses []string
 }
 
-type ObjectGetter interface {
-	io.Closer
-
-	Resources(ctx context.Context) []runtime.Object
-}
-
+// Resources holds all known API objects related to the target. Resources are
+// populated by various clients (e.g. xds, kubelet) and contains several
+// different types of object (e.g. Namespaces, Pods, AuthorizationPolicies).
 type Resources struct {
 	counter int
 	decoder runtime.Decoder
@@ -77,6 +98,7 @@ type Resources struct {
 	ServiceEntries        []networkingv1alpha3.ServiceEntry
 }
 
+// NewResources returns Resources that can track and decode objects from clients.
 func NewResources() Resources {
 	istioscheme.AddToScheme(clientsetscheme.Scheme)
 	return Resources{
@@ -110,6 +132,9 @@ func (r *Resources) addIfNotExists(obj runtime.Object, meta metav1.ObjectMeta, a
 	r.counter++
 }
 
+// Load processes an array of Kubernetes runtime objects and adds relevant
+// resources to the state. Load will ignore duplicate entries or entries
+// with unknown types.
 func (r *Resources) Load(resources []runtime.Object) error {
 	for _, resource := range resources {
 		switch obj := resource.(type) {
@@ -159,6 +184,8 @@ func (r *Resources) Load(resources []runtime.Object) error {
 	return nil
 }
 
+// LoadFromDirectory processes all YAML files within a directory, decodes them
+// as Kubernetes resources, and loads them into the state.
 func (r *Resources) LoadFromDirectory(dir string) error {
 	root := os.DirFS(dir)
 
@@ -193,10 +220,12 @@ func (r *Resources) load(data []byte) error {
 	return r.Load(resources)
 }
 
+// Len returns the number of resources within the state.
 func (r *Resources) Len() int {
 	return r.counter
 }
 
+// Export exports all known resources as YAML files in the provided directory.
 func (r *Resources) Export(dir string) error {
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		return err

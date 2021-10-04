@@ -28,32 +28,28 @@ import (
 	"github.com/praetorian-inc/mithril/pkg/xds"
 )
 
-/* Runner is a struct containing several strategies to try in cluster enumeration.
- */
+// Runner is a struct containing several strategies to try in cluster enumeration.
 type Runner struct {
 	Name       string
 	Strategies []Strategy
 }
 
-/* Strategy is an interface that abstractly describes how information is to be
-   collected in an istio system.
-*/
+// Strategy is an interface that abstractly describes how information is to be
+// collected in an istio system.
 type Strategy interface {
 	// Name merely returns the strategy's name for reporting purposes.
 	Name() string
-	/* Run is called on every strategy to execute its particular method
-	   of collection. it is passed a reference to a types.Discovery struct to record
-	   gathered and verified data. it is assumed that the implementation of this
-	   function will perform validation of discovered data before recording it to
-	   the Discovery struct.
-	*/
+	// Run is called on every strategy to execute its particular method
+	// of collection. it is passed a reference to a types.Discovery struct to record
+	// gathered and verified data. it is assumed that the implementation of this
+	// function will perform validation of discovered data before recording it to
+	// the Discovery struct.
 	Run(input *types.Discovery) error
 }
 
-/* Run as defined for a runner loops over all strategies and passes a
-   *types.Discovery. it then surfaces any errors it receives. if all strategies
-   fail, an error is produced
-*/
+// Run as defined for a runner loops over all strategies and passes a
+// *types.Discovery. it then surfaces any errors it receives. if all strategies
+// fail, an error is produced
 func (r *Runner) Run(input *types.Discovery) error {
 	var errs error
 	for _, strategy := range r.Strategies {
@@ -71,14 +67,12 @@ func (r *Runner) Run(input *types.Discovery) error {
 	return fmt.Errorf("all strategies failed: %s", errs)
 }
 
-/* Runners defines a type alias for a list of Runner structs
- */
+// Runners defines a type alias for a list of Runner structs
 type Runners []Runner
 
-/* Run as defined for a Runners type iterates over all runners in the list, and
-   calls each runner's Run() method. it then looks at the resulting
-   types.Discovery and attempts to use them to confirm if they are correct.
-*/
+// Run as defined for a Runners type iterates over all runners in the list, and
+// calls each runner's Run() method. it then looks at the resulting
+// types.Discovery and attempts to use them to confirm if they are correct.
 func (runners Runners) Run(disco *types.Discovery, resources *types.Resources) {
 	ctx := context.Background()
 

@@ -2,7 +2,6 @@ package netscan
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"net"
 	"sync"
@@ -31,7 +30,7 @@ type ScanJob struct {
 
 type Option func(*ScanJob)
 
-func WithTLS(config *tls.Config) Option {
+func WithTLS() Option {
 	return func(s *ScanJob) {
 		if s.mode == "http" {
 			hs := s.scanner.(*httpScanner)

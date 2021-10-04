@@ -1,8 +1,6 @@
 package knownvulns
 
 import (
-	"fmt"
-	"log"
 	"testing"
 
 	"github.com/bmizerany/assert"
@@ -35,9 +33,9 @@ func TestCveScraper(t *testing.T) {
 	if err == nil {
 		yamlData, err := yaml.Marshal(scrapedData)
 		if err != nil {
-			log.Fatalf("%v", err)
+			t.Fatalf("%v", err)
 		}
 		sYamlData := string(yamlData)
-		fmt.Printf("%s", sYamlData)
+		t.Logf("%s", sYamlData)
 	}
 }

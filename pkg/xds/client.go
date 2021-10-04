@@ -60,11 +60,6 @@ type xdsClient struct {
 
 // NewClient creates an XDS client given a GRPC address.
 func NewClient(addr string) (DiscoveryClient, error) {
-	err := istioscheme.AddToScheme(clientsetscheme.Scheme)
-	if err != nil {
-		return nil, err
-	}
-
 	cli := &xdsClient{
 		discoveryAddr: addr,
 		opts: []grpc.DialOption{
@@ -72,7 +67,7 @@ func NewClient(addr string) (DiscoveryClient, error) {
 		},
 		decoder: clientsetscheme.Codecs.UniversalDeserializer(),
 	}
-	_, err = cli.Version(context.Background())
+	_, err := cli.Version(context.Background())
 	return cli, err
 }
 

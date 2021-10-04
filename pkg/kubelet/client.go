@@ -12,26 +12,23 @@ import (
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
-type KubeletClient interface {
-	Pods(ctx context.Context) ([]v1.Pod, error)
-}
-
-type kubeletClient struct {
+// Client wraps methods exposed by the kubelet read-only API.
+type Client struct {
 	kubeletAddr string
 
 	decoder runtime.Decoder
 }
 
 // NewClient creates a kubelet client on the read-only port.
-func NewClient(addr string) (KubeletClient, error) {
-	cli := &kubeletClient{
+func NewClient(addr string) (*Client, error) {
+	cli := &Client{
 		kubeletAddr: addr,
 		decoder:     clientsetscheme.Codecs.UniversalDeserializer(),
 	}
 	return cli, cli.verify()
 }
 
-func (c *kubeletClient) verify() error {
+func (c *Client) verify() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
 
@@ -54,7 +51,7 @@ func (c *kubeletClient) verify() error {
 }
 
 // Pods queries the read-only kubelet API for a list of pods running on that node.
-func (c *kubeletClient) Pods(ctx context.Context) ([]v1.Pod, error) {
+func (c *Client) Pods(ctx context.Context) ([]v1.Pod, error) {
 	url := fmt.Sprintf("http://%s/pods", c.kubeletAddr)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

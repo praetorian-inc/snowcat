@@ -1,14 +1,13 @@
-/* package kubelet implements a runner to locate services associated with the
-   current cluster's kubelet api. to accomplish this, it comes equipped with
-   the following strategies:
-
-DefaultGatewayStrategy:
-   this strategy will attempt to locate the current pod's default gateway. from
-   there, it will scan every subnet for the same address to look for http
-   services associated with the kubelet api.
-
-   ie. default gateway = 192.168.2.1 will produce a scan for 192.168.{0-255}.1:10255
-*/
+// Package kubelet implements a runner to locate services associated with the
+// current cluster's kubelet api. to accomplish this, it comes equipped with
+// the following strategies:
+//
+// DefaultGatewayStrategy:
+//    this strategy will attempt to locate the current pod's default gateway. from
+//    there, it will scan every subnet for the same address to look for http
+//    services associated with the kubelet api.
+//
+//    i.e. default gateway = 192.168.2.1 will produce a scan for 192.168.{0-255}.1:10255
 package kubelet
 
 import (
@@ -24,9 +23,8 @@ import (
 	"github.com/praetorian-inc/mithril/pkg/types"
 )
 
-/* Runner provides the list of strategies to use to gather information about the
-   istio control plane components
-*/
+// Runner defines the list of strategies to use to discover information about
+// the Kubelet read-only API on nodes in the cluster.
 var Runner = runner.Runner{
 	Name: "Kubelet",
 	Strategies: []runner.Strategy{
@@ -41,19 +39,13 @@ func verifyKubeletAPI(addr string) bool {
 
 type defaultGatewayStrategy struct{}
 
-/* Name returns the strategy name for reporting purposes.
-
-   required by the Strategy interface
-*/
+// Name returns the strategy name for reporting purposes.
 func (s *defaultGatewayStrategy) Name() string {
 	return "default-gateway"
 }
 
-/* Run executes the default gateway strategy and populates the Discovery type's
-   KubeletAddress if it can verify the results.
-
-   required by the Strategy interface
-*/
+// Run executes the default gateway strategy and populates the Discovery type's
+// KubeletAddress if it can verify the results.
 func (s *defaultGatewayStrategy) Run(input *types.Discovery) error {
 	var hosts []string
 

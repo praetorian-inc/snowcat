@@ -1,26 +1,25 @@
-/* package istiod implements a runner to locate services associated with the
-   istio control plane components. to accomplish this, it comes equipped with
-   the following strategies:
-
-KubeletStrategy:
-   if provided with an ip:port combination known to be running the kubelet api,
-   this strategy can query for running pods, check them for istio related
-   labels, and determine whether or not they are running the debug/discovery
-   services
-
-IstiodStrategy:
-   if provided with the istio namespace, it will attempt to locate the
-   debug/discovery service at `istiod.{namespace}.svc.cluster.local`
-
-IstioPilotStrategy:
-   if provided with the istio namespace, it will attempt to locate the
-   debug/discovery services at `istio-pilot.{namespace}.svc.cluster.local`
-
-EnvoyConfigStrategy:
-   the envoy configuration strategy will attempt to connect to
-   `http://localhost:15000/config_dump` to extract the location of the discovery
-   address
-*/
+// Package istiod implements a runner to locate services associated with the
+// istio control plane components. to accomplish this, it comes equipped with
+// the following strategies:
+//
+// KubeletStrategy:
+//    if provided with an ip:port combination known to be running the kubelet api,
+//    this strategy can query for running pods, check them for istio related
+//    labels, and determine whether or not they are running the debug/discovery
+//    services
+//
+// IstiodStrategy:
+//    if provided with the istio namespace, it will attempt to locate the
+//    debug/discovery service at `istiod.{namespace}.svc.cluster.local`
+//
+// IstioPilotStrategy:
+//    if provided with the istio namespace, it will attempt to locate the
+//    debug/discovery services at `istio-pilot.{namespace}.svc.cluster.local`
+//
+// EnvoyConfigStrategy:
+//    the envoy configuration strategy will attempt to connect to
+//    `http://localhost:15000/config_dump` to extract the location of the discovery
+//    address
 package istiod
 
 import (
@@ -38,9 +37,8 @@ import (
 	"github.com/praetorian-inc/mithril/pkg/xds"
 )
 
-/* Runner provides the list of strategies to use to gather information about the
-   istio control plane components
-*/
+// Runner defines the list of strategies to use to discover information about
+// the Istio control plane.
 var Runner = runner.Runner{
 	Name: "Istio Control Plane",
 	Strategies: []runner.Strategy{
@@ -90,19 +88,13 @@ func isDebugIstiod(host string) bool {
 
 type kubeletStrategy struct{}
 
-/* Name returns the strategy name for reporting purposes.
-
-   required by the Strategy interface
-*/
+// Name returns the strategy name for reporting purposes.
 func (s *kubeletStrategy) Name() string {
 	return "kubelet"
 }
 
-/* Run executes the kubelet strategy and populates the Discovery type's
-   DiscoveryAddress and DebugzAddress if it can verify the results.
-
-   required by the Strategy interface
-*/
+// Run executes the kubelet strategy and populates the Discovery type's
+// DiscoveryAddress and DebugzAddress if it can verify the results.
 func (s *kubeletStrategy) Run(input *types.Discovery) error {
 	ctx := context.Background()
 
@@ -158,19 +150,13 @@ func (s *kubeletStrategy) Run(input *types.Discovery) error {
 
 type istiodStrategy struct{}
 
-/* Name returns the strategy name for reporting purposes.
-
-   required by the Strategy interface
-*/
+// Name returns the strategy name for reporting purposes.
 func (s *istiodStrategy) Name() string {
 	return "istiod"
 }
 
-/* Run executes the istiod strategy and populates the Discovery type's
-   DiscoveryAddress and DebugzAddress if it can verify the results.
-
-   required by the Strategy interface
-*/
+// Run executes the istiod strategy and populates the Discovery type's
+// DiscoveryAddress and DebugzAddress if it can verify the results.
 func (s *istiodStrategy) Run(input *types.Discovery) error {
 	if input.IstioNamespace == "" {
 		return fmt.Errorf("istio namespace required")
@@ -187,19 +173,13 @@ func (s *istiodStrategy) Run(input *types.Discovery) error {
 
 type istioPilotStrategy struct{}
 
-/* Name returns the strategy name for reporting purposes.
-
-   required by the Strategy interface
-*/
+// Name returns the strategy name for reporting purposes.
 func (s *istioPilotStrategy) Name() string {
 	return "istio-pilot"
 }
 
-/* Run executes the istio-pilot strategy and populates the Discovery type's
-   DiscoveryAddress and DebugzAddress if it can verify the results.
-
-   required by the Strategy interface
-*/
+// Run executes the istio-pilot strategy and populates the Discovery type's
+// DiscoveryAddress and DebugzAddress if it can verify the results.
 func (s *istioPilotStrategy) Run(input *types.Discovery) error {
 	if input.IstioNamespace == "" {
 		return fmt.Errorf("istio namespace required")
@@ -216,19 +196,13 @@ func (s *istioPilotStrategy) Run(input *types.Discovery) error {
 
 type envoyConfigStrategy struct{}
 
-/* Name returns the strategy name for reporting purposes.
-
-   required by the Strategy interface
-*/
+// Name returns the strategy name for reporting purposes.
 func (s *envoyConfigStrategy) Name() string {
 	return "envoy"
 }
 
-/* Run executes the envoy config strategy and populates the Discovery type's
-   DiscoveryAddress if it can verify the results.
-
-   required by the Strategy interface
-*/
+// Run executes the envoy config strategy and populates the Discovery type's
+// DiscoveryAddress if it can verify the results.
 func (s *envoyConfigStrategy) Run(input *types.Discovery) error {
 	ec, err := envoy.RetrieveConfig("http://localhost:15000/config_dump")
 	if err != nil {

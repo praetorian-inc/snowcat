@@ -10,37 +10,27 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
-type DebugzClient interface {
-	Resources(ctx context.Context) ([]runtime.Object, error)
-	Version(ctx context.Context) (string, error)
-}
-
-type debugzClient struct {
+// Client wraps methods exposed by the istiod debug API.
+type Client struct {
 	debugAddr string
 
 	decoder runtime.Decoder
 }
 
 // NewClient creates a client for the istiod debug API.
-func NewClient(addr string) (DebugzClient, error) {
-	err := istioscheme.AddToScheme(clientsetscheme.Scheme)
-	if err != nil {
-		return nil, err
-	}
-
-	cli := &debugzClient{
+func NewClient(addr string) (*Client, error) {
+	cli := &Client{
 		debugAddr: addr,
 		decoder:   clientsetscheme.Codecs.UniversalDeserializer(),
 	}
 	return cli, cli.verify()
 }
 
-func (c *debugzClient) verify() error {
+func (c *Client) verify() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
 
@@ -68,7 +58,7 @@ func (c *debugzClient) verify() error {
 }
 
 // Resources queries the Istio debug server for all resources.
-func (c *debugzClient) Resources(ctx context.Context) ([]runtime.Object, error) {
+func (c *Client) Resources(ctx context.Context) ([]runtime.Object, error) {
 	var configs []json.RawMessage
 
 	url := fmt.Sprintf("http://%s/debug/configz", c.debugAddr)
@@ -115,7 +105,7 @@ func getVersionFromBody(body []byte) (string, error) {
 	return string(matches[0][1]), nil
 }
 
-func (c *debugzClient) Version(ctx context.Context) (string, error) {
+func (c *Client) Version(ctx context.Context) (string, error) {
 	url := fmt.Sprintf("http://%s/debug/syncz", c.debugAddr)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

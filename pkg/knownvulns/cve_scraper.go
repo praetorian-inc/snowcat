@@ -34,14 +34,14 @@ func convertStringToNumber(versionString string) (uint64, error) {
 	versionNumbers := strings.Split(versionString, ".")
 	// For now assume we are working with 3 decimals major.minor.revision
 	numDecimals := 3
-	versionValue := uint64(0)
+	var versionValue uint64
 	for offset, versionNumber := range versionNumbers {
 		version, err := strconv.ParseUint(versionNumber, 10, 64)
 		if err != nil {
 			return 0, err
 		}
 		multiplier := uint64(math.Pow(10, float64(numDecimals-offset-1)*4))
-		versionValue = versionValue + version*multiplier
+		versionValue += version * multiplier
 	}
 	return versionValue, nil
 }
@@ -57,7 +57,7 @@ func parseAffectedVersions(affectedVersionsString string) []VersionRange {
 			// Handle All releases prior to 1.9.8
 			maxVersion, err := convertStringToNumber(strings.Split(affectedVersionString, "All releases prior to ")[1])
 			// we want PRIOR to this version, so drop the revision by 1
-			maxVersion = maxVersion - 1
+			maxVersion--
 			if err != nil {
 				fmt.Println("Found a version string we couldn't convert: " + affectedVersionString)
 			}
@@ -134,7 +134,7 @@ func parseBody(body []byte) ([]IstioCVEData, error) {
 
 		colMatches := tdRegex.FindAllStringSubmatch(stringMatch[1], -1)
 
-		//<a href=/latest/news/security/istio-security-2019-001/>ISTIO-SECURITY-2019-001</a>
+		// e.g. <a href=/latest/news/security/istio-security-2019-001/>ISTIO-SECURITY-2019-001</a>
 		linkRegex := regexp.MustCompile(`<a href=(.*?)>(.*?)</a>`)
 		discMatches := linkRegex.FindAllStringSubmatch(colMatches[0][1], -1)
 		impactMatches := linkRegex.FindAllStringSubmatch(colMatches[3][1], -1)
@@ -146,13 +146,6 @@ func parseBody(body []byte) ([]IstioCVEData, error) {
 		if colMatches[3][1] != "N/A" && impactMatches != nil {
 			impactScore = impactMatches[0][2]
 		}
-
-		//fmt.Println("Disclosure: " + discMatches[0][2])
-		//fmt.Println("Disclosure URL: " + discMatches[0][1])
-		//fmt.Println("Date: " + colMatches[1][1])
-		//fmt.Println("Affected Releases: " + colMatches[2][1])
-		//fmt.Println("Impact Score: " + impactScore)
-		//fmt.Println("Related: " + colMatches[4][1])
 
 		data := IstioCVEData{
 			AffectedVersions: affectedVersions,

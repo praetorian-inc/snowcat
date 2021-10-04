@@ -98,9 +98,15 @@ type Resources struct {
 	ServiceEntries        []networkingv1alpha3.ServiceEntry
 }
 
+func init() {
+	err := istioscheme.AddToScheme(clientsetscheme.Scheme)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // NewResources returns Resources that can track and decode objects from clients.
 func NewResources() Resources {
-	istioscheme.AddToScheme(clientsetscheme.Scheme)
 	return Resources{
 		decoder: clientsetscheme.Codecs.UniversalDeserializer(),
 		seen:    make(map[string]struct{}),
@@ -135,7 +141,7 @@ func (r *Resources) addIfNotExists(obj runtime.Object, meta metav1.ObjectMeta, a
 // Load processes an array of Kubernetes runtime objects and adds relevant
 // resources to the state. Load will ignore duplicate entries or entries
 // with unknown types.
-func (r *Resources) Load(resources []runtime.Object) error {
+func (r *Resources) Load(resources []runtime.Object) {
 	for _, resource := range resources {
 		switch obj := resource.(type) {
 		case *securityv1beta1.PeerAuthentication:
@@ -181,7 +187,6 @@ func (r *Resources) Load(resources []runtime.Object) error {
 			}).Warn("cannot load resource of unknown type")
 		}
 	}
-	return nil
 }
 
 // LoadFromDirectory processes all YAML files within a directory, decodes them
@@ -217,7 +222,8 @@ func (r *Resources) load(data []byte) error {
 
 		resources = append(resources, obj)
 	}
-	return r.Load(resources)
+	r.Load(resources)
+	return nil
 }
 
 // Len returns the number of resources within the state.
@@ -283,9 +289,5 @@ func exportObjects(dir string, obj runtime.Object) (err error) {
 		}
 	}()
 
-	if err = encoder.Encode(obj, f); err != nil {
-		return err
-	}
-
-	return nil
+	return encoder.Encode(obj, f)
 }

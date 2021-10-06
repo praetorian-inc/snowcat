@@ -15,25 +15,27 @@
 # Documentation on this file structure: https://goreleaser.com
 before:
   hooks:
-    - go mod download
+  - go mod download
 builds:
-  -
-    id: mithril
-    main: ./cmd/mithril
-    binary: mithril
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - darwin
-    goarch:
-      - amd64
+- id: mithril
+  main: ./cmd/mithril
+  binary: mithril
+  env:
+  - CGO_ENABLED=0
+  goos:
+  - linux
+  - darwin
+  goarch:
+  - amd64
+archives:
+- id: mithril
+  name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
 changelog:
   # skip changelog generation for now
   skip: true
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
+    - '^docs:'
+    - '^test:'
 

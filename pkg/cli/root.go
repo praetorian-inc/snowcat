@@ -29,7 +29,6 @@ import (
 var (
 	configFileFlag       string
 	logLevelFlag         string
-	inputDirectoryFlag   string
 	exportDirectoryFlag  string
 	istioVersionFlag     string
 	istioNamespaceFlag   string
@@ -41,7 +40,7 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "mithril",
+	Use:   "mithril [input]",
 	Short: "an istio security scanner",
 	Long: `this tool can be used by an organization looking to audit their own
 istio service mesh, or by a security engineer looking to evaluate a customer's mesh.
@@ -79,8 +78,6 @@ func init() {
 
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.Flags().StringVar(&inputDirectoryFlag, "input", "",
-		"the input directory of static yaml files to scan")
 	rootCmd.Flags().StringVar(&exportDirectoryFlag, "export", "",
 		"write discovered resources to the specified export directory as yaml")
 

@@ -15,6 +15,7 @@ import (
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
@@ -143,6 +144,19 @@ func (r *Resources) addIfNotExists(obj runtime.Object, meta metav1.ObjectMeta, a
 // with unknown types.
 func (r *Resources) Load(resources []runtime.Object) {
 	for _, resource := range resources {
+		// If resource is a list, run Load on the items in this list.
+		if meta.IsListType(resource) {
+			items, err := meta.ExtractList(resource)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"type": resource.GetObjectKind().GroupVersionKind().String(),
+				}).Warn("failed to extract resources from list")
+				continue
+			}
+			r.Load(items)
+		}
+
+		// Process each known resource type
 		switch obj := resource.(type) {
 		case *securityv1beta1.PeerAuthentication:
 			r.addIfNotExists(resource, obj.ObjectMeta, func() {

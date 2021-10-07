@@ -122,44 +122,45 @@ all configuration options.
 
 The following configuration options can be specified:
 
-`-c <file>` `--config <file>` - the configuration file location (default:
-`./mithril.yml`)
+* `-c <file>` `--config <file>` - the configuration file location (default:
+  `./mithril.yml`)
 
-`-l <level>` `--log-level <level>` - log level for console output, because
-logging is handled by [Logrus](https://github.com/sirupsen/logrus "Logrus"), the
-currently supported levels are trace, debug, info, warning, error, fatal, and
-panic. (default: `info`)
+* `-l <level>` `--log-level <level>` - log level for console output, because
+  logging is handled by [Logrus](https://github.com/sirupsen/logrus "Logrus"),
+  the currently supported levels are trace, debug, info, warning, error, fatal,
+  and panic. (default: `info`)
 
-`-s` `--save-config` - if this switch is passed, the configuration of Mithril
-will be written out to the specified config file. This is useful if the tool is
-to be run multiple times on the same cluster to allow for fewer arguments to be
-passed in subsequent runs. NOTE: this will overwrite the existing config file
-every time.
+* `-s` `--save-config` - if this switch is passed, the configuration of Mithril
+  will be written out to the specified config file. This is useful if the tool
+  is to be run multiple times on the same cluster to allow for fewer arguments
+  to be passed in subsequent runs. NOTE: this will overwrite the existing config
+  file every time.
 
-`--format [text|json]` - the output format for the tool, this is either `text`
-for human readable content, or `json` for structured output.
+* `--format [text|json]` - the output format for the tool, this is either `text`
+  for human readable content, or `json` for structured output.
 
-`--export <directory>` - this flag will cause mithril to output the discovered
-Kubernetes resources to a directory as YAML files
+* `--export <directory>` - this flag will cause mithril to output the discovered
+  Kubernetes resources to a directory as YAML files
 
-`--istio-version <version>` - if the Istio control plane version is known prior
-to running the tool, it can be passed via this flag. Additionally, it binds to
-the configuration variable `istio-version` in the configuration file.
+* `--istio-version <version>` - if the Istio control plane version is known prior
+  to running the tool, it can be passed via this flag. Additionally, it binds to
+  the configuration variable `istio-version` in the configuration file.
 
-`--istio-namespace <namespace>` - if the namespace running the Istio control
-plane is known prior to running the tool, it can be passed via this flag.
-Additionally, it binds to the configuration variable `istio-namespace` in the
-configuration file.
+* `--istio-namespace <namespace>` - if the namespace running the Istio control
+  plane is known prior to running the tool, it can be passed via this flag.
+  Additionally, it binds to the configuration variable `istio-namespace` in the
+  configuration file.
 
-`--discovery-address <ip:port>` - this specifies the address of the
-unauthenticated XDS port. It is bound to the configuration variable
-`discovery-address`.
+* `--discovery-address <ip:port>` - this specifies the address of the
+  unauthenticated XDS port. It is bound to the configuration variable
+  `discovery-address`.
 
-`--debugz-address <ip:port>` - this specifies the address of the Istiod's debug
-API. It is bound to the configuration variable `debugz-address`.
+* `--debugz-address <ip:port>` - this specifies the address of the Istiod's debug
+  API. It is bound to the configuration variable `debugz-address`.
 
-`--kubelet-addresses <list of ip:port>` - this specifies a list of kubelet nodes
-read-only API ports. It is bound to the configuration variable `kubelet-addresses`
+* `--kubelet-addresses <list of ip:port>` - this specifies a list of kubelet nodes
+  read-only API ports. It is bound to the configuration variable
+  `kubelet-addresses`
 
 To set these flags with environment variables, simply uppercase the
 configuration variable name, and replace dashes with underscores, for example:

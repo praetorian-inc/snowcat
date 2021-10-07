@@ -81,6 +81,25 @@ Mithril will assume it is running inside of a cluster enabled with Istio, and
 begin to enumerate the required data. Optionally, you can point mithril at a
 directory containing Kubernets YAML files.
 
+### Run Mithril against static configuration information
+
+```shell
+# running with a directory specified will cause it to run in file analysis mode
+./mithril [options] <directory name>
+```
+
+### Run Mithril in an Istio workload container
+
+```shell
+./mithril [options]
+```
+
+### Get Help
+
+```shell
+mithril help
+```
+
 ### Command Line Options
 
 Mithril comes equipped with several command line options to influence the
@@ -93,7 +112,6 @@ Configuration of Mithril is handled by a combination of
 [Cobra](https://github.com/spf13/cobra "Cobra") and
 [Viper](https://github.com/spf13/viper "Viper"). This allows Mithril to be
 configured through the following methods, in order of precedence.
-
 
 1. Command Line Flag
 2. Environment Variables
@@ -143,22 +161,6 @@ API. It is bound to the configuration variable `debugz-address`.
 `--kubelet-addresses <list of ip:port>` - this specifies a list of kubelet nodes
 read-only API ports. It is bound to the configuration variable `kubelet-addresses`
 
-
-### Run Mithril against static configuration information
-
-```shell
-# running with a directory specified will cause it to run in file analysis mode
-./mithril [options] <directory name>
-```
-
-### Run Mithril in an Istio workload container
-
-```shell
-./mithril [options]
-```
-
-### Get Help
-
-```shell
-mithril help
-```
+To set these flags with environment variables, simply uppercase the
+configuration variable name, and replace dashes with underscores, for example:
+`istio-version` -> `ISTIO_VERSION`

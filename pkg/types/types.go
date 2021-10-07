@@ -168,6 +168,7 @@ func (r *Resources) Load(resources []runtime.Object) {
 				continue
 			}
 			r.Load(items)
+			continue
 		}
 
 		// Process each known resource type

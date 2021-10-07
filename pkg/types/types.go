@@ -208,10 +208,20 @@ func (r *Resources) Load(resources []runtime.Object) {
 			r.addIfNotExists(resource, obj.ObjectMeta, func() {
 				r.Namespaces = append(r.Namespaces, *obj)
 			})
+		case *runtime.Unknown:
+			unknown, _, err := r.decoder.Decode(obj.Raw, nil, nil)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"err": err,
+				}).Error("failed to decode unknown resource")
+			} else {
+				r.Load([]runtime.Object{unknown})
+			}
 		default:
 			gvk := obj.GetObjectKind().GroupVersionKind()
 			log.WithFields(log.Fields{
-				"type": gvk.String(),
+				"type":   gvk.String(),
+				"gotype": fmt.Sprintf("%T", resource),
 			}).Warn("cannot load resource of unknown type")
 		}
 	}

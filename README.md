@@ -3,7 +3,7 @@
 [![CI](https://github.com/praetorian-inc/mithril/workflows/CI/badge.svg)](actions?query=branch%3Adevelopment)
 [![Release](https://github.com/praetorian-inc/mithril/workflows/Release/badge.svg)](releases)
 
-What does this do
+Mithril gathers and analyzes the configuration of an Istio cluster and audits it for potential violations of security best practices.
 
 ## Why We Built Mithril
 

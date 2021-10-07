@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/fatih/color"
@@ -125,6 +126,9 @@ func init() {
 
 func initConfig() {
 	viper.SetConfigFile(configFileFlag)
+
+	// we would like for our env vars to have _'s but our vars to be -'d
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
 	// read in environment variables that match
 	viper.AutomaticEnv()

@@ -15,6 +15,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -43,6 +44,7 @@ import (
 var (
 	configFileFlag       string
 	logLevelFlag         string
+	formatFlag           string
 	exportDirectoryFlag  string
 	istioVersionFlag     string
 	istioNamespaceFlag   string
@@ -91,6 +93,8 @@ func init() {
 	viper.BindPFlag("log-level", rootCmd.Flags().Lookup("log-level"))
 
 	cobra.OnInitialize(initConfig)
+
+	rootCmd.Flags().StringVar(&formatFlag, "format", "text", "output format [json, text]")
 
 	rootCmd.Flags().StringVar(&exportDirectoryFlag, "export", "",
 		"write discovered resources to the specified export directory as yaml")
@@ -248,10 +252,17 @@ func RunMithril(args []string) {
 		results = append(results, res...)
 	}
 
-	red := color.New(color.FgRed).SprintFunc()
-	yellow := color.New(color.FgYellow).SprintFunc()
-	for _, res := range results {
-		fmt.Printf("%s [%s]: %s\n", red(res.Name), yellow(res.Resource), res.Description)
+	switch formatFlag {
+	case "json":
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		_ = enc.Encode(results)
+	case "text":
+		red := color.New(color.FgRed).SprintFunc()
+		yellow := color.New(color.FgYellow).SprintFunc()
+		for _, res := range results {
+			fmt.Printf("%s [%s]: %s\n", red(res.Name), yellow(res.Resource), res.Description)
+		}
 	}
 
 	if saveConfFlag {

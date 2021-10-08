@@ -27,9 +27,6 @@ builds:
   - darwin
   goarch:
   - amd64
-archives:
-- id: mesh-hunter
-  name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
 changelog:
   # skip changelog generation for now
   skip: true

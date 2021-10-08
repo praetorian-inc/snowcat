@@ -44,7 +44,7 @@ $ go install github.com/praetorian-inc/mesh-hunter@latest
 $ shasum -a 256 mesh-hunter_${VERSION}_${ARCH}.tar.gz
 b05c4d7895be260aa16336f29249c50b84897dab90e1221c9e96af9233751f22  mesh-hunter_${VERSION}_${ARCH}.tar.gz
 
-$ cat mesh-hunter_${VERSION}_${ARCH}_checksums.txt | grep mithril_${VERSION}_${ARCH}.tar.gz
+$ cat mesh-hunter_${VERSION}_${ARCH}_checksums.txt | grep mesh-hunter_${VERSION}_${ARCH}.tar.gz
 b05c4d7895be260aa16336f29249c50b84897dab90e1221c9e96af9233751f22  mesh-hunter_${VERSION}_${ARCH}.tar.gz
 ```
 
@@ -78,7 +78,7 @@ $ mv ./mesh-hunter /usr/local/bin
 
 There are two main modes of operation for Mesh Hunter. With no positional argument,
 Mesh Hunter will assume it is running inside of a cluster enabled with Istio, and
-begin to enumerate the required data. Optionally, you can point mithril at a
+begin to enumerate the required data. Optionally, you can point mesh-hunter at a
 directory containing Kubernets YAML files.
 
 ### Run Mesh Hunter against static configuration information

@@ -31,9 +31,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/praetorian-inc/mithril/pkg/envoy"
-	"github.com/praetorian-inc/mithril/pkg/runner"
-	"github.com/praetorian-inc/mithril/pkg/types"
+	"github.com/praetorian-inc/mesh-hunter/pkg/envoy"
+	"github.com/praetorian-inc/mesh-hunter/pkg/runner"
+	"github.com/praetorian-inc/mesh-hunter/pkg/types"
 )
 
 // Runner defines the list of strategies to use to discover information about

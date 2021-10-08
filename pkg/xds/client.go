@@ -36,7 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 
-	blockinggrpc "github.com/praetorian-inc/mithril/pkg/grpc"
+	blockinggrpc "github.com/praetorian-inc/mesh-hunter/pkg/grpc"
 )
 
 // Client wraps Envoy XDS and exposes methods to query data.

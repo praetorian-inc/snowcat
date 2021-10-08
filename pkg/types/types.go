@@ -34,7 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 
-	"github.com/praetorian-inc/mithril/pkg/util/namer"
+	"github.com/praetorian-inc/mesh-hunter/pkg/util/namer"
 )
 
 // AuditResult is a single instance of an issue discovered by an auditor.

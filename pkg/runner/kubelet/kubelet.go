@@ -31,10 +31,10 @@ import (
 	"github.com/jackpal/gateway"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/praetorian-inc/mithril/pkg/kubelet"
-	"github.com/praetorian-inc/mithril/pkg/netscan"
-	"github.com/praetorian-inc/mithril/pkg/runner"
-	"github.com/praetorian-inc/mithril/pkg/types"
+	"github.com/praetorian-inc/mesh-hunter/pkg/kubelet"
+	"github.com/praetorian-inc/mesh-hunter/pkg/netscan"
+	"github.com/praetorian-inc/mesh-hunter/pkg/runner"
+	"github.com/praetorian-inc/mesh-hunter/pkg/types"
 )
 
 // Runner defines the list of strategies to use to discover information about

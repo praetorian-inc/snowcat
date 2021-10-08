@@ -19,8 +19,8 @@ package install
 import (
 	log "github.com/sirupsen/logrus"
 
-	"github.com/praetorian-inc/mithril/auditors"
-	"github.com/praetorian-inc/mithril/pkg/types"
+	"github.com/praetorian-inc/mesh-hunter/auditors"
+	"github.com/praetorian-inc/mesh-hunter/pkg/types"
 )
 
 func init() {

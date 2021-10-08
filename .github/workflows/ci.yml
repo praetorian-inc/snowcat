@@ -63,7 +63,7 @@ jobs:
         go mod download
     
     - name: Build all binaries
-      working-directory: ./cmd/mithril
+      working-directory: ./cmd/mesh-hunter
       env:
         CGO_ENABLED: 0
       run: |

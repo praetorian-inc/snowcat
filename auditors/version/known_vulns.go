@@ -19,9 +19,9 @@ package version
 import (
 	"fmt"
 
-	"github.com/praetorian-inc/mithril/auditors"
-	"github.com/praetorian-inc/mithril/pkg/knownvulns"
-	"github.com/praetorian-inc/mithril/pkg/types"
+	"github.com/praetorian-inc/mesh-hunter/auditors"
+	"github.com/praetorian-inc/mesh-hunter/pkg/knownvulns"
+	"github.com/praetorian-inc/mesh-hunter/pkg/types"
 )
 
 func init() {

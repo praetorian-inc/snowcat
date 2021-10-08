@@ -21,8 +21,8 @@ import (
 
 	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
 
-	"github.com/praetorian-inc/mithril/auditors"
-	"github.com/praetorian-inc/mithril/pkg/types"
+	"github.com/praetorian-inc/mesh-hunter/auditors"
+	"github.com/praetorian-inc/mesh-hunter/pkg/types"
 )
 
 func init() {

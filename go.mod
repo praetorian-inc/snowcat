@@ -1,4 +1,4 @@
-module github.com/praetorian-inc/mithril
+module github.com/praetorian-inc/mesh-hunter
 
 go 1.16
 

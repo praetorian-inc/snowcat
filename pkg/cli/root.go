@@ -223,7 +223,8 @@ func RunMeshHunter(args []string) {
 		}
 	}
 
-	if resources.Len() == 0 {
+	// TODO: generalize the empty disco check
+	if resources.Len() == 0 && disco.IstioVersion == "" {
 		log.Fatal("failed to discovery any resources")
 	}
 

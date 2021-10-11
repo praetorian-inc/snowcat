@@ -1,4 +1,4 @@
-module github.com/praetorian-inc/mesh-hunter
+module github.com/praetorian-inc/snowcat
 
 go 1.16
 

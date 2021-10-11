@@ -17,7 +17,7 @@ package main
 import (
 
 	// this is the location you probably wanted to see instead of this file
-	"github.com/praetorian-inc/mesh-hunter/pkg/cli"
+	"github.com/praetorian-inc/snowcat/pkg/cli"
 )
 
 func main() {

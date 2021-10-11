@@ -18,11 +18,11 @@
 // "blank import" for its package.
 //
 //  import (
-//      "github.com/praetorian-inc/mesh-hunter/auditors"
-//      "github.com/praetorian-inc/mesh-hunter/pkg/types"
+//      "github.com/praetorian-inc/snowcat/auditors"
+//      "github.com/praetorian-inc/snowcat/pkg/types"
 //
-//      _ "github.com/praetorian-inc/mesh-hunter/auditors/authz"
-//      _ "github.com/praetorian-inc/mesh-hunter/auditors/peerauth"
+//      _ "github.com/praetorian-inc/snowcat/auditors/authz"
+//      _ "github.com/praetorian-inc/snowcat/auditors/peerauth"
 //  )
 //
 //  auditors, err := auditors.New(types.Config{})
@@ -42,7 +42,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/praetorian-inc/mesh-hunter/pkg/types"
+	"github.com/praetorian-inc/snowcat/pkg/types"
 )
 
 // Register makes an auditor available with the provided name. If register is

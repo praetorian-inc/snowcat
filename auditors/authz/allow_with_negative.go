@@ -20,8 +20,8 @@ import (
 	apiv1beta "istio.io/api/security/v1beta1"
 	security "istio.io/client-go/pkg/apis/security/v1beta1"
 
-	"github.com/praetorian-inc/mesh-hunter/auditors"
-	"github.com/praetorian-inc/mesh-hunter/pkg/types"
+	"github.com/praetorian-inc/snowcat/auditors"
+	"github.com/praetorian-inc/snowcat/pkg/types"
 )
 
 func init() {

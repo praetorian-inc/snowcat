@@ -43,12 +43,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/praetorian-inc/mesh-hunter/pkg/debugz"
-	"github.com/praetorian-inc/mesh-hunter/pkg/envoy"
-	"github.com/praetorian-inc/mesh-hunter/pkg/kubelet"
-	"github.com/praetorian-inc/mesh-hunter/pkg/runner"
-	"github.com/praetorian-inc/mesh-hunter/pkg/types"
-	"github.com/praetorian-inc/mesh-hunter/pkg/xds"
+	"github.com/praetorian-inc/snowcat/pkg/debugz"
+	"github.com/praetorian-inc/snowcat/pkg/envoy"
+	"github.com/praetorian-inc/snowcat/pkg/kubelet"
+	"github.com/praetorian-inc/snowcat/pkg/runner"
+	"github.com/praetorian-inc/snowcat/pkg/types"
+	"github.com/praetorian-inc/snowcat/pkg/xds"
 )
 
 // Runner defines the list of strategies to use to discover information about

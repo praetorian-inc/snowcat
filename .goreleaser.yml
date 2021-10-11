@@ -17,9 +17,9 @@ before:
   hooks:
   - go mod download
 builds:
-- id: mesh-hunter
-  main: ./cmd/mesh-hunter
-  binary: mesh-hunter
+- id: snowcat
+  main: ./cmd/snowcat
+  binary: snowcat
   env:
   - CGO_ENABLED=0
   goos:

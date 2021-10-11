@@ -27,19 +27,19 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/praetorian-inc/mesh-hunter/auditors"
+	"github.com/praetorian-inc/snowcat/auditors"
 	// blank imports are for auditor registration
-	_ "github.com/praetorian-inc/mesh-hunter/auditors/authz"
-	_ "github.com/praetorian-inc/mesh-hunter/auditors/destinationrule"
-	_ "github.com/praetorian-inc/mesh-hunter/auditors/gateway"
-	_ "github.com/praetorian-inc/mesh-hunter/auditors/install"
-	_ "github.com/praetorian-inc/mesh-hunter/auditors/peerauth"
-	_ "github.com/praetorian-inc/mesh-hunter/auditors/version"
-	"github.com/praetorian-inc/mesh-hunter/pkg/runner"
-	"github.com/praetorian-inc/mesh-hunter/pkg/runner/istiod"
-	"github.com/praetorian-inc/mesh-hunter/pkg/runner/kubelet"
-	"github.com/praetorian-inc/mesh-hunter/pkg/runner/namespace"
-	"github.com/praetorian-inc/mesh-hunter/pkg/types"
+	_ "github.com/praetorian-inc/snowcat/auditors/authz"
+	_ "github.com/praetorian-inc/snowcat/auditors/destinationrule"
+	_ "github.com/praetorian-inc/snowcat/auditors/gateway"
+	_ "github.com/praetorian-inc/snowcat/auditors/install"
+	_ "github.com/praetorian-inc/snowcat/auditors/peerauth"
+	_ "github.com/praetorian-inc/snowcat/auditors/version"
+	"github.com/praetorian-inc/snowcat/pkg/runner"
+	"github.com/praetorian-inc/snowcat/pkg/runner/istiod"
+	"github.com/praetorian-inc/snowcat/pkg/runner/kubelet"
+	"github.com/praetorian-inc/snowcat/pkg/runner/namespace"
+	"github.com/praetorian-inc/snowcat/pkg/types"
 )
 
 var (
@@ -57,7 +57,7 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "mesh-hunter [input]",
+	Use:   "snowcat [input]",
 	Short: "an istio security scanner",
 	Long: `this tool can be used by an organization looking to audit their own
 istio service mesh, or by a security engineer looking to evaluate a customer's mesh.
@@ -82,13 +82,13 @@ and live clusters`,
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		RunMeshHunter(args)
+		RunSnowcat(args)
 	},
 }
 
 func init() {
-	rootCmd.Flags().StringVarP(&configFileFlag, "config", "c", "mesh-hunter.yml",
-		"mesh-hunter configuration file")
+	rootCmd.Flags().StringVarP(&configFileFlag, "config", "c", "snowcat.yml",
+		"snowcat configuration file")
 	rootCmd.Flags().StringVarP(&logLevelFlag, "log-level", "l", "info",
 		"log level, see https://github.com/sirupsen/logrus#level-logging for options.")
 	viper.BindPFlag("log-level", rootCmd.Flags().Lookup("log-level"))
@@ -193,8 +193,8 @@ func saveFinalDiscovery(disco types.Discovery) {
 	viper.Set("kubelet-addresses", disco.KubeletAddresses)
 }
 
-// RunMeshHunter runs the scanner.
-func RunMeshHunter(args []string) {
+// RunSnowcat runs the scanner.
+func RunSnowcat(args []string) {
 	var err error
 
 	var inputPath string

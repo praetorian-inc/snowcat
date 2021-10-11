@@ -63,7 +63,7 @@ jobs:
         go mod download
     
     - name: Build all binaries
-      working-directory: ./cmd/mesh-hunter
+      working-directory: ./cmd/snowcat
       env:
         CGO_ENABLED: 0
       run: |

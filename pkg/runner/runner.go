@@ -36,10 +36,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/praetorian-inc/mesh-hunter/pkg/debugz"
-	kubeletclient "github.com/praetorian-inc/mesh-hunter/pkg/kubelet"
-	"github.com/praetorian-inc/mesh-hunter/pkg/types"
-	"github.com/praetorian-inc/mesh-hunter/pkg/xds"
+	"github.com/praetorian-inc/snowcat/pkg/debugz"
+	kubeletclient "github.com/praetorian-inc/snowcat/pkg/kubelet"
+	"github.com/praetorian-inc/snowcat/pkg/types"
+	"github.com/praetorian-inc/snowcat/pkg/xds"
 )
 
 // Runner is a struct containing several strategies to try in cluster enumeration.

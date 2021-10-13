@@ -1,3 +1,7 @@
+<p align="center">
+    <img src="docs/img/logo.png" width="75%">
+</p>
+
 # Snowcat - A service mesh scanning tool
 
 [![CI](https://github.com/praetorian-inc/snowcat/workflows/CI/badge.svg)](actions?query=branch%3Adevelopment)

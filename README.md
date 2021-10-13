@@ -25,7 +25,7 @@ The two usage modes can help engineers analyze their clusters from different per
 By implementing analysis methods for both of these perspectives, Snowcat is able to gather a more "complete"
 picture of the security posture of an Istio cluster.
 
-For more information, please read [our blog post](https://www.praetorian.com/blog/wherever-this-will-live/).
+For more information, please read [our blog post](https://www.praetorian.com/blog/introducing-snowcat/).
 
 ## Install
 

@@ -44,6 +44,9 @@ func (a *auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.A
 	var results []types.AuditResult
 
 	for _, rule := range resources.DestinationRules {
+		if rule.Spec.TrafficPolicy == nil {
+			continue
+		}
 		if !isClientTLSSettingSafe(rule.Spec.TrafficPolicy.Tls) {
 			results = append(results, types.AuditResult{
 				Name:        a.Name(),

@@ -1,0 +1,8 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: empty-tls-policy
+  namespace: default
+spec:
+  host: example.com
+  trafficPolicy: {}

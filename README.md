@@ -34,7 +34,7 @@ You can install Snowcat locally by using any one of the options listed below.
 ### Install with `go install`
 
 ```shell
-$ go install github.com/praetorian-inc/snowcat@latest
+$ go install github.com/praetorian-inc/snowcat/cmd/snowcat@latest
 ```
 
 ### Install a release binary

@@ -30,7 +30,7 @@ func init() {
 type auditor struct{}
 
 func (a *auditor) Name() string {
-	return "Permissive Mututal TLS"
+	return "Permissive Mutual TLS"
 }
 
 func (a *auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.AuditResult, error) {

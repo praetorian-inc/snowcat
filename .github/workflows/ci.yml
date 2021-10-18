@@ -63,15 +63,18 @@ jobs:
         go mod download
     
     - name: Build all binaries
-      working-directory: ./cmd/snowcat
       env:
         CGO_ENABLED: 0
       run: |
-        go build -trimpath -ldflags="-w -s" -v
+        go build -trimpath -ldflags="-w -s" -v ./cmd/snowcat
 
     - name: Run tests
       run: |
         go test -v ./...
+
+    - name: Run test fixtures
+      run: |
+        ./snowcat _fixtures/
 
   # From https://github.com/reviewdog/action-golangci-lint
   golangci-lint:

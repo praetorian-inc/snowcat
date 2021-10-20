@@ -33,7 +33,7 @@ func (a *auditor) Name() string {
 	return "Permissive Mutual TLS"
 }
 
-func (a *auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.AuditResult, error) {
+func (a *auditor) Audit(disco types.Discovery, resources types.Resources) ([]types.AuditResult, error) {
 	var results []types.AuditResult
 
 	namespaceSafety := make(map[string]bool)
@@ -45,6 +45,15 @@ func (a *auditor) Audit(_ types.Discovery, resources types.Resources) ([]types.A
 		if policy.Spec.Mtls.Mode.String() == "STRICT" {
 			namespaceSafety[policy.Namespace] = true
 		}
+	}
+
+	// If a strict policy is configured in the root namespace, it applies mesh-wide
+	rootns := disco.IstioNamespace
+	if rootns == "" {
+		rootns = "istio-system"
+	}
+	if _, safe := namespaceSafety[rootns]; safe {
+		return results, nil
 	}
 
 	for ns, safe := range namespaceSafety {

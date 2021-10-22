@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -47,12 +48,21 @@ var (
 	logLevelFlag         string
 	formatFlag           string
 	exportDirectoryFlag  string
+	outputFileFlag       string
 	istioVersionFlag     string
 	istioNamespaceFlag   string
 	discoveryAddressFlag string
 	debugzAddressFlag    string
 	kubeletAddressesFlag []string
 	saveConfFlag         bool
+	jobMode              bool
+)
+
+const (
+	jobCompleteMsg = `snowcat job complete! use the following command to export the results:
+
+kubectl -n %s cp %s:%s snowcat-results
+`
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -100,6 +110,9 @@ func init() {
 	rootCmd.Flags().StringVar(&exportDirectoryFlag, "export", "",
 		"write discovered resources to the specified export directory as yaml")
 
+	rootCmd.Flags().StringVar(&outputFileFlag, "output", "",
+		"write results to the specified file")
+
 	rootCmd.Flags().StringVar(&istioVersionFlag, "istio-version", "",
 		"the version of the istio control plane")
 	viper.BindPFlag("istio-version", rootCmd.Flags().Lookup("istio-version"))
@@ -122,6 +135,9 @@ func init() {
 
 	rootCmd.Flags().BoolVarP(&saveConfFlag, "save-config", "s", false,
 		"whether or not to save discovery to current config file")
+
+	rootCmd.Flags().BoolVarP(&jobMode, "job-mode", "", false,
+		"used when running snowcat as a k8s job, delays exit to allow extracting results")
 }
 
 func initConfig() {
@@ -257,16 +273,24 @@ func RunSnowcat(args []string) {
 		results = append(results, res...)
 	}
 
+	var out io.WriteCloser
+	if outputFileFlag != "" {
+		out, err = os.Create(outputFileFlag)
+		defer out.Close()
+	} else {
+		out = os.Stdout
+	}
+
 	switch formatFlag {
 	case "json":
-		enc := json.NewEncoder(os.Stdout)
+		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")
 		_ = enc.Encode(results)
 	case "text":
 		red := color.New(color.FgRed).SprintFunc()
 		yellow := color.New(color.FgYellow).SprintFunc()
 		for _, res := range results {
-			fmt.Printf("%s [%s]: %s\n", red(res.Name), yellow(res.Resource), res.Description)
+			fmt.Fprintf(out, "%s [%s]: %s\n", red(res.Name), yellow(res.Resource), res.Description)
 		}
 	}
 
@@ -281,5 +305,20 @@ func RunSnowcat(args []string) {
 				"err": err,
 			}).Errorf("could not save configuration")
 		}
+	}
+
+	if jobMode && exportDirectoryFlag != "" {
+		podName := os.Getenv("POD_NAME")
+		if podName == "" {
+			podName = "<pod>"
+		}
+
+		namespace := os.Getenv("POD_NAMESPACE")
+		if namespace == "" {
+			namespace = "<namespace>"
+		}
+
+		fmt.Printf(jobCompleteMsg, namespace, podName, exportDirectoryFlag)
+		time.Sleep(5 * time.Minute)
 	}
 }

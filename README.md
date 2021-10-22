@@ -98,6 +98,29 @@ directory containing Kubernets YAML files.
 ./snowcat [options]
 ```
 
+### Run Snowcat in a cluster as a Job
+
+```shell
+# deploy snowcat to your cluster as a Job
+$ kubectl -n default apply -f https://raw.githubusercontent.com/praetorian-inc/snowcat/main/deploy/job.yaml
+job.batch/snowcat created
+
+# wait a few moments for the scan to complete
+
+# review snowcat logs
+$ kubectl -n default logs jobs/snowcat
+...
+time="2021-10-22T17:47:50Z" level=info msg="running auditor" auditor="Overly Broad Gateway Hosts"
+time="2021-10-22T17:47:50Z" level=info msg="running auditor" auditor="Weak Service Account Authentication"
+time="2021-10-22T17:47:50Z" level=info msg="found jwt policy" auditor="Weak Service Account Authentication" policy=third-party-jwt
+snowcat job complete! use the following command to export the results:
+
+kubectl -n default cp snowcat-46tj5:/data snowcat-results
+
+# download results from the running pod
+$ kubectl -n default cp snowcat-46tj5:/data snowcat-results
+```
+
 ### Get Help
 
 ```shell
@@ -146,6 +169,9 @@ The following configuration options can be specified:
 * `--export <directory>` - this flag will cause Snowcat to output the discovered
   Kubernetes resources to a directory as YAML files
 
+* `--output <path>` - this flag will cause Snowcat to scan results to the
+  specified file
+
 * `--istio-version <version>` - if the Istio control plane version is known prior
   to running the tool, it can be passed via this flag. Additionally, it binds to
   the configuration variable `istio-version` in the configuration file.
@@ -165,6 +191,10 @@ The following configuration options can be specified:
 * `--kubelet-addresses <list of ip:port>` - this specifies a list of kubelet nodes
   read-only API ports. It is bound to the configuration variable
   `kubelet-addresses`
+
+* `--job-mode` - this flag is used in `deploy/job.yaml` to pause the snowcat binary
+  and provide information to the user on how to extract results from a running
+  container. NOTE: this is not useful outside the Job usage scenario.
 
 To set these flags with environment variables, simply uppercase the
 configuration variable name, and replace dashes with underscores, for example:

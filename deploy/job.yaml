@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: snowcat
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      containers:
+      - name: snowcat
+        image: ghcr.io/praetorian-inc/snowcat:latest
+        imagePullPolicy: Always
+        command:
+        - "snowcat"
+        - "--export=/data"
+        - "--output=/data/results.json"
+        - "--format=json"
+        - "--log-level=debug"
+        - "--job-mode"
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+      restartPolicy: OnFailure
